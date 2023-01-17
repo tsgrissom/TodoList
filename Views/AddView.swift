@@ -6,17 +6,18 @@ struct AddView: View {
     @EnvironmentObject var listViewModel: ListViewModel
     
     let lightRed = Color.red.opacity(0.8)
+    let disabledBtnBg = Color.gray
     
     @State var textFieldText: String = ""
     @State var alertTitle: String = ""
-    @State var alertBgColor: Color = .red
-    @State var alertFgColor: Color = .white
-    @State var alertVisible: Bool = false
-    @State var leftBtnColor: Color = .accentColor
-    @State var rightBtnColor: Color = .red
-    @State var leftBtnSymbol: String = "checkmark"
-    @State var rightBtnSymbol: String = "trash.fill"
-    @State var rightBtnWidth: Double = .infinity
+    @State var alertBg: Color = .red
+    @State var alertFg: Color = .white
+    @State var isAlertVisible: Bool = false
+    @State var saveBtnBg: Color = .accentColor
+    @State var saveBtnSymbol: String = "checkmark"
+    @State var clearBtnBg: Color = .red
+    @State var clearBtnSymbol: String = "trash.fill"
+    @State var clearBtnWidth: Double = .infinity
     
     // MARK: Layers
     
@@ -32,7 +33,7 @@ struct AddView: View {
             
             Spacer()
             
-            if alertVisible {
+            if isAlertVisible {
                 alertBoxLayer
             }
             
@@ -47,22 +48,22 @@ struct AddView: View {
             Button(
                 action: saveBtnPressed,
                 label: {
-                Image(systemName: leftBtnSymbol)
+                Image(systemName: saveBtnSymbol)
                     .foregroundColor(.white)
                     .imageScale(.large)
                     .frame(height: 55)
                     .frame(maxWidth: .infinity)
-                    .background(isTextPrepared() ? leftBtnColor : Color.gray)
+                    .background(isTextPrepared() ? saveBtnBg : disabledBtnBg)
                     .cornerRadius(10)
             })
             Spacer()
             Button(action: clearBtnPressed, label: {
-                Image(systemName: rightBtnSymbol)
+                Image(systemName: clearBtnSymbol)
                     .foregroundColor(.white)
                     .imageScale(.large)
                     .frame(height: 55)
-                    .frame(maxWidth: rightBtnWidth)
-                    .background(!textFieldText.isEmpty ? rightBtnColor : Color.gray)
+                    .frame(maxWidth: clearBtnWidth)
+                    .background(!textFieldText.isEmpty ? clearBtnBg : disabledBtnBg)
                     .cornerRadius(10)
             })
         }
@@ -72,12 +73,12 @@ struct AddView: View {
         HStack {
             Text(alertTitle)
                 .padding(15)
-                .foregroundColor(alertFgColor)
+                .foregroundColor(alertFg)
         }
         .frame(maxWidth: .infinity)
-        .background(alertBgColor)
+        .background(alertBg)
         .cornerRadius(10)
-        .foregroundColor(alertFgColor)
+        .foregroundColor(alertFg)
         .padding(.bottom, 10)
         .overlay(alignment: .trailing, content: {
             ZStack {
@@ -95,7 +96,7 @@ struct AddView: View {
             .offset(x: 5, y: -35)
             .onTapGesture {
                 withAnimation(.linear(duration: 0.1), {
-                    alertVisible = false
+                    isAlertVisible = false
                 })
             }
         })
@@ -110,11 +111,11 @@ struct AddView: View {
     
     func saveBtnPressed() {
         guard textFieldText.count > 3 else {
-            leftBtnColor = .red
-            leftBtnSymbol = "xmark"
+            saveBtnBg = .red
+            saveBtnSymbol = "xmark"
             
             flashAlert(
-                text: alertVisible
+                text: isAlertVisible
                 ? "Task is too short. Please enter at least 3 characters." // Provide second text if they click-spam for UX
                 : "Tasks must be at least 3 characters in length 📏"
             )
@@ -122,18 +123,20 @@ struct AddView: View {
             DispatchQueue.main.asyncAfter(
                 deadline: .now() + 3,
                 execute: {
-                    leftBtnColor = Color.accentColor
-                    leftBtnSymbol = "checkmark"
+                    saveBtnBg = Color.accentColor
+                    saveBtnSymbol = "checkmark"
                 }
             )
             
             return
         }
         
-        leftBtnColor = .green
-        leftBtnSymbol = "plus"
+        // Otherwise, save is successful
         
-        rightBtnWidth = 0
+        saveBtnBg = .green
+        saveBtnSymbol = "plus"
+        
+        clearBtnWidth = 0
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
             listViewModel.addItem(title: textFieldText)
@@ -157,31 +160,31 @@ struct AddView: View {
         
         // Animate button color transition + change symbol
         withAnimation(.linear, {
-            rightBtnColor = success ? .green : .red
+            clearBtnBg = success ? .green : .red
         })
         
-        rightBtnSymbol = success ? "checkmark" : "xmark"
+        clearBtnSymbol = success ? "checkmark" : "xmark"
         
         // Reset btn attributes w/ animation after 1s
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 3,
             execute: {
                 withAnimation(.linear, {
-                    rightBtnColor = .red
+                    clearBtnBg = .red
                 })
                 
-                rightBtnSymbol = "trash.fill"
+                clearBtnSymbol = "trash.fill"
         })
     }
     
     func flashAlert(text: String, bgColor: Color = Color.red, fgColor: Color = Color.white, duration: Double = 15.0) {
         alertTitle = text
-        alertBgColor = bgColor
-        alertFgColor = fgColor
+        alertBg = bgColor
+        alertFg = fgColor
     
         // In case the alert is already visible, hide it, and slide it back in after 1/2 a second
-        guard !alertVisible else {
-            alertVisible = false
+        guard !isAlertVisible else {
+            isAlertVisible = false
             
             DispatchQueue.main.asyncAfter(
                 deadline: .now() + 0.5,
@@ -198,14 +201,14 @@ struct AddView: View {
     
     private func showAlert(duration: Double = 15.0) {
         withAnimation(.linear(duration: 0.2), {
-            alertVisible = true
+            isAlertVisible = true
         })
         
         DispatchQueue.main.asyncAfter(
             deadline: .now() + duration,
             execute: {
                 withAnimation(.linear, {
-                    alertVisible = false
+                    isAlertVisible = false
                 })
             }
         )

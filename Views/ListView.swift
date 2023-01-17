@@ -38,7 +38,16 @@ struct ListView: View {
                     
                     NavigationLink(
                         destination: AddView(),
-                        label: getComposeBtn
+                        label: {
+                            Text("Begin Composing")
+                                .foregroundColor(.white)
+                                .font(.headline)
+                                .frame(height: 55)
+                                .frame(maxWidth: .infinity)
+                                .background(Color.accentColor)
+                                .cornerRadius(10)
+                                .transition(.move(edge: .leading))
+                        }
                     )
                     .padding(.horizontal)
                 }
@@ -53,19 +62,6 @@ struct ListView: View {
                 })
             }
         }
-    }
-    
-    private var getComposeBtn: Label {
-        Label(title: {
-            Text("Begin Composing")
-                .foregroundColor(.white)
-                .font(.headline)
-                .frame(height: 55)
-                .frame(maxWidth: .infinity)
-                .background(Color.accentColor)
-                .cornerRadius(10)
-                .transition(.move(edge: .leading))
-        }, icon: nil)
     }
     
     func isEmpty() -> Bool {
