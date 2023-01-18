@@ -22,14 +22,8 @@ struct AddView: View {
     // MARK: Layers
     
     var body: some View {
-        VStack {
-            TextField("Type something here...", text: $textFieldText)
-                .padding(.horizontal)
-                .frame(height: 45)
-                .background(Color.gray.opacity(0.3))
-                .cornerRadius(10)
-            
-            buttonLayer
+        ScrollView {
+            formLayer
             
             Spacer()
             
@@ -43,29 +37,38 @@ struct AddView: View {
         .navigationTitle("Composing a Task")
     }
     
-    private var buttonLayer: some View {
-        HStack {
-            Button(
-                action: saveBtnPressed,
-                label: {
-                Image(systemName: saveBtnSymbol)
-                    .foregroundColor(.white)
-                    .imageScale(.large)
-                    .frame(height: 55)
-                    .frame(maxWidth: .infinity)
-                    .background(isTextPrepared() ? saveBtnBg : disabledBtnBg)
+    private var formLayer: some View {
+        VStack {
+            HStack {
+                TextField("Type something here...", text: $textFieldText)
+                    .padding(.horizontal)
+                    .frame(height: 45)
+                    .background(Color.gray.opacity(0.3))
                     .cornerRadius(10)
-            })
-            Spacer()
-            Button(action: clearBtnPressed, label: {
-                Image(systemName: clearBtnSymbol)
-                    .foregroundColor(.white)
-                    .imageScale(.large)
-                    .frame(height: 55)
-                    .frame(maxWidth: clearBtnWidth)
-                    .background(!textFieldText.isEmpty ? clearBtnBg : disabledBtnBg)
-                    .cornerRadius(10)
-            })
+            }
+            HStack {
+                Button(
+                    action: saveBtnPressed,
+                    label: {
+                    Image(systemName: saveBtnSymbol)
+                        .foregroundColor(.white)
+                        .imageScale(.large)
+                        .frame(height: 55)
+                        .frame(maxWidth: .infinity)
+                        .background(isTextPrepared() ? saveBtnBg : disabledBtnBg)
+                        .cornerRadius(10)
+                })
+                Spacer()
+                Button(action: clearBtnPressed, label: {
+                    Image(systemName: clearBtnSymbol)
+                        .foregroundColor(.white)
+                        .imageScale(.large)
+                        .frame(height: 55)
+                        .frame(maxWidth: clearBtnWidth)
+                        .background(!textFieldText.isEmpty ? clearBtnBg : disabledBtnBg)
+                        .cornerRadius(10)
+                })
+            }
         }
     }
     

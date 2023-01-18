@@ -24,8 +24,7 @@ struct ListRowView: View {
                 }
             NavigationLink(
                 destination: EditView(
-                    item: item,
-                    originalText: item.title
+                    item: item
                 ), label: {
                     Text(item.title)
                 }

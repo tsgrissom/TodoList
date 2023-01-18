@@ -9,9 +9,8 @@ struct ListView: View {
         .navigationTitle("Tasks")
         .navigationBarItems(
             leading:
-                NavigationLink(
-                    destination: AddView(),
-                    label: { Image(systemName: "plus")
+                NavigationLink(destination: SettingsView(), label: {
+                    Image(systemName: "gear")
                 }),
             trailing:
                 EditButton().foregroundColor(.accentColor)
@@ -33,7 +32,7 @@ struct ListView: View {
                     }
                 }
                 
-                if listViewModel.items.count < 4 {
+                if listViewModel.items.count < 2 {
                     Spacer()
                     
                     NavigationLink(
@@ -54,12 +53,23 @@ struct ListView: View {
                 
                 Spacer()
                 
-                NavigationLink(destination: SettingsView(), label: {
-                    Image(systemName: "gear")
-                        .imageScale(.large)
-                        .foregroundColor(.accentColor)
-                        .offset(x: -160, y: 300)
-                })
+                HStack {
+                    Spacer()
+                    
+                    NavigationLink(
+                        destination: AddView(),
+                        label: {
+                            Circle()
+                                .fill(Color.accentColor)
+                                .frame(width: 65, height: 65)
+                                .overlay(content: {
+                                    Image(systemName: "plus")
+                                        .imageScale(.large)
+                                        .foregroundColor(.white)
+                                })
+                    })
+                    .offset(x: -15, y: 300)
+                }
             }
         }
     }

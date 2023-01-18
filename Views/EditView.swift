@@ -13,28 +13,22 @@ struct EditView: View {
     @EnvironmentObject var listViewModel: ListViewModel
     
     let item: ItemModel
-    let originalText: String
+    let originalText: String = "Original text"
     
     @State var textFieldText: String = ""
-    @State var rightBtnAnimated: Bool = false
-    @State var rightBtnColor: Color = .red
-    @State var rightBtnSymbol: String = "arrow.clockwise"
-    @State var leftBtnColor: Color = .accentColor
-    @State var leftBtnSymbol: String = "checkmark"
     @State var alertTitle: String = ""
     @State var alertFgColor: Color = .white
     @State var alertBgColor: Color = .red
     @State var alertVisible: Bool = false
+    @State var saveBtnBgColor: Color = .accentColor
+    @State var saveBtnSymbol: String = "checkmark"
+    @State var resetBtnAnimated: Bool = false
+    @State var resetBtnBgColor: Color = .red
+    @State var resetBtnSymbol: String = "arrow.clockwise"
     
     var body: some View {
-        VStack {
-            TextField("Type something here...", text: $textFieldText)
-                .padding(.horizontal)
-                .frame(height: 45)
-                .background(Color.gray.opacity(0.3))
-                .cornerRadius(10)
-            
-            buttonLayer
+        ScrollView {
+            formLayer
             
             Spacer()
             
@@ -48,30 +42,39 @@ struct EditView: View {
         .padding()
     }
     
-    private var buttonLayer: some View {
-        HStack {
-            Button(
-                action: saveBtnPressed,
-                label: {
-                Image(systemName: "checkmark")
-                    .foregroundColor(.white)
-                    .imageScale(.large)
-                    .frame(height: 55)
-                    .frame(maxWidth: .infinity)
-                    .background(Color.accentColor)
+    private var formLayer: some View {
+        VStack {
+            HStack {
+                TextField("Type something here...", text: $textFieldText)
+                    .padding(.horizontal)
+                    .frame(height: 45)
+                    .background(Color.gray.opacity(0.3))
                     .cornerRadius(10)
-            })
-            Spacer()
-            Button(action: undoBtnPressed, label: {
-                Image(systemName: "arrow.clockwise")
-                    .rotationEffect(.degrees(rightBtnAnimated ? 180 : 0))
-                    .foregroundColor(.white)
-                    .imageScale(.large)
-                    .frame(height: 55)
-                    .frame(maxWidth: .infinity)
-                    .background(.red)
-                    .cornerRadius(10)
-            })
+            }
+            HStack {
+                Button(
+                    action: saveBtnPressed,
+                    label: {
+                    Image(systemName: saveBtnSymbol)
+                        .foregroundColor(.white)
+                        .imageScale(.large)
+                        .frame(height: 55)
+                        .frame(maxWidth: .infinity)
+                        .background(saveBtnBgColor)
+                        .cornerRadius(10)
+                })
+                Spacer()
+                Button(action: undoBtnPressed, label: {
+                    Image(systemName: resetBtnSymbol)
+                        .rotationEffect(.degrees(resetBtnAnimated ? 180 : 0))
+                        .foregroundColor(.white)
+                        .imageScale(.large)
+                        .frame(height: 55)
+                        .frame(maxWidth: .infinity)
+                        .background(resetBtnBgColor)
+                        .cornerRadius(10)
+                })
+            }
         }
     }
     
@@ -119,10 +122,8 @@ struct EditView: View {
     }
     
     func undoBtnPressed() {
-        
-        
         withAnimation(.linear(duration: 0.5), {
-            rightBtnAnimated.toggle()
+            resetBtnAnimated.toggle()
         })
     }
 }
@@ -130,7 +131,7 @@ struct EditView: View {
 struct EditView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            EditView(item: ItemModel(title: "Lorem ipsum dolor...", isCompleted: false), originalText: "Lorem ipsum dolor...")
+            EditView(item: ItemModel(title: "Lorem ipsum dolor...", isCompleted: false))
         }
         .environmentObject(ListViewModel())
     }
