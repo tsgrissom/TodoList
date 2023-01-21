@@ -21,18 +21,20 @@ struct ListRowView: View {
                 .foregroundColor(item.isCompleted ? .accentColor : checkboxFgColor)
                 .onTapGesture {
                     listViewModel.updateItem(item: item)
+                    simpleVibration(feedback: .success)
                 }
-            NavigationLink(
-                destination: EditView(
-                    item: item
-                ), label: {
-                    Text(item.title)
-                }
-            )
+            NavigationLink(destination: EditView(item: item)) {
+                Text(item.title)
+            }
             Spacer()
         }
         .font(.title2)
         .padding(.vertical, 8)
+    }
+    
+    func simpleVibration(feedback: UINotificationFeedbackGenerator.FeedbackType) {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(feedback)
     }
     
     func isDarkMode() -> Bool {

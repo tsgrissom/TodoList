@@ -1,19 +1,14 @@
-//
-//  EditView.swift
-//  TodoList
-//
-//  Created by Tyler Grissom on 1/14/23.
-//
-
 import SwiftUI
 
 struct EditView: View {
     
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var listViewModel: ListViewModel
+    @FocusState var isFocused: Bool
     
     let item: ItemModel
-    var originalText: String = "Original text"
+    let originalText: String
+    let disabledBtnBgColor = Color.gray.opacity(0.45)
     
     @State var textFieldText: String = ""
     @State var alertTitle: String = ""
@@ -23,9 +18,16 @@ struct EditView: View {
     @State var saveBtnBgColor: Color = .accentColor
     @State var saveBtnSymbol: String = "checkmark"
     @State var resetBtnAnimated: Bool = false
-    @State var resetBtnBgColor: Color = .red
-    @State var resetBtnSymbol: String = "arrow.clockwise"
+    @State var resetBtnBgColor: Color = .yellow
+    @State var resetBtnSymbol: String = "square.fill.on.square.fill"
     @State var resetBtnWidth: Double = .infinity
+    
+    init(item: ItemModel) {
+        self.item = item
+        self.originalText = item.title
+        
+        textFieldText = originalText
+    }
     
     var body: some View {
         ScrollView {
@@ -43,70 +45,15 @@ struct EditView: View {
         .padding()
     }
     
-    private var formLayer: some View {
-        VStack {
-            HStack {
-                TextField(originalText, text: $textFieldText)
-                    .padding(.horizontal)
-                    .frame(height: 45)
-                    .background(Color.gray.opacity(0.3))
-                    .cornerRadius(10)
-            }
-            HStack {
-                Button(
-                    action: saveBtnPressed,
-                    label: {
-                    Image(systemName: saveBtnSymbol)
-                        .foregroundColor(.white)
-                        .imageScale(.large)
-                        .frame(height: 55)
-                        .frame(maxWidth: .infinity)
-                        .background(saveBtnBgColor)
-                        .cornerRadius(10)
-                })
-                Spacer()
-                Button(action: undoBtnPressed, label: {
-                    Image(systemName: resetBtnSymbol)
-                        .rotationEffect(.degrees(resetBtnAnimated ? 360 : 0))
-                        .foregroundColor(.white)
-                        .imageScale(.large)
-                        .frame(height: 55)
-                        .frame(maxWidth: .infinity)
-                        .background(resetBtnBgColor)
-                        .cornerRadius(10)
-                })
-            }
-        }
-    }
-    
-    private var alertBoxLayer: some View {
-        HStack {
-            Text(alertTitle)
-                .padding(15)
-                .foregroundColor(alertFgColor)
-        }
-        .frame(maxWidth: .infinity)
-        .background(alertBgColor)
-        .cornerRadius(10)
-        .foregroundColor(alertFgColor)
-        .padding(.bottom, 10)
-        .transition(.move(edge: .bottom))
-        .onTapGesture {
-            withAnimation(.linear(duration: 0.1), {
-                isAlertVisible = false
-            })
-        }
-    }
-    
     func saveBtnPressed() {
-        guard textFieldText.count > 3 else {
+        guard textFieldText.count >= 12 else {
             saveBtnBgColor = .red
             saveBtnSymbol = "xmark"
             
             flashAlert(
                 text: isAlertVisible
-                ? "Task is too short. Please enter at least 3 characters." // Provide second text if they click-spam for UX
-                : "Tasks must be at least 3 characters in length 📏"
+                ? "Task is too short. Please enter at least 12 characters." // Provide second text if they click-spam for UX
+                : "Tasks must be at least 12 characters in length 📏"
             )
             
             DispatchQueue.main.asyncAfter(
@@ -134,7 +81,24 @@ struct EditView: View {
     }
     
     func undoBtnPressed() {
-        
+        /*
+          Calculate new undo button
+          Empty text = Yellow button which copies the placeholder text into the text field
+          Some text = Red button which empties the text field
+         */
+        if textFieldText.isEmpty {
+            textFieldText = originalText
+            withAnimation(.linear) {
+                resetBtnBgColor = .red
+            }
+            resetBtnSymbol = "trash.fill"
+        } else {
+            textFieldText = ""
+            withAnimation(.linear) {
+                resetBtnBgColor = .yellow
+            }
+            resetBtnSymbol = "square.fill.on.square.fill"
+        }
     }
     
     func flashAlert(text: String, bgColor: Color = Color.red, fgColor: Color = Color.white, duration: Double = 15.0) {
@@ -173,14 +137,87 @@ struct EditView: View {
             }
         )
     }
+    
+    private func getTrimmedText() -> String {
+        return textFieldText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }
 
 struct EditView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            EditView(item: ItemModel(title: "Lorem ipsum dolor...", isCompleted: false))
+            EditView(item: ItemModel(
+                title: "Lorem ipsum dolor...",
+                isCompleted: false
+            ))
         }
         .environmentObject(ListViewModel())
     }
 }
                 
+extension EditView {
+    
+    private var formLayer: some View {
+        VStack {
+            HStack {
+                TextField(originalText, text: $textFieldText)
+                    .padding(.horizontal)
+                    .frame(height: 45)
+                    .background(Color.gray.opacity(0.3))
+                    .cornerRadius(10)
+                    .focused($isFocused)
+            }
+            
+            controlButtonRow
+        }
+    }
+    
+    private var controlButtonRow: some View {
+        let isEqualToOriginal = getTrimmedText() == originalText
+        
+        return HStack {
+            Button(
+                action: saveBtnPressed,
+                label: {
+                Image(systemName: saveBtnSymbol)
+                    .foregroundColor(.white)
+                    .imageScale(.large)
+                    .frame(height: 55)
+                    .frame(maxWidth: .infinity)
+                    .background(isEqualToOriginal ? disabledBtnBgColor : saveBtnBgColor)
+                    .cornerRadius(10)
+            })
+            Spacer()
+            Button(action: undoBtnPressed, label: {
+                Image(systemName: resetBtnSymbol)
+                    .rotationEffect(.degrees(resetBtnAnimated ? 360 : 0))
+                    
+                    .foregroundColor(.white)
+                    .imageScale(.large)
+                    .frame(height: 55)
+                    .frame(maxWidth: .infinity)
+                    .background(resetBtnBgColor)
+                    .cornerRadius(10)
+            })
+        }
+    }
+    
+    private var alertBoxLayer: some View {
+        HStack {
+            Text(alertTitle)
+                .padding(15)
+                .foregroundColor(alertFgColor)
+        }
+        .frame(maxWidth: .infinity)
+        .background(alertBgColor)
+        .cornerRadius(10)
+        .foregroundColor(alertFgColor)
+        .padding(.bottom, 10)
+        .transition(.move(edge: .bottom))
+        .onTapGesture {
+            withAnimation(.linear(duration: 0.1), {
+                isAlertVisible = false
+            })
+        }
+    }
+}

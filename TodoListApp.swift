@@ -10,6 +10,14 @@ struct TodoListApp: App {
      ViewModel - Class manages model for view
      */
     
+    /*
+     TODO
+     Enhanced haptics
+     Settings which work
+     Left edge swipe
+     
+     */
+    
     @StateObject var listViewModel: ListViewModel = ListViewModel()
     
     var body: some Scene {
