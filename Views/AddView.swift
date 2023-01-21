@@ -6,12 +6,12 @@ struct AddView: View {
     @EnvironmentObject var listViewModel: ListViewModel
     
     let lightRed = Color.red.opacity(0.8)
-    let disabledBtnBg = Color.gray
+    let disabledBtnBg = Color.gray.opacity(0.7)
     
     @State var textFieldText: String = ""
     @State var alertTitle: String = ""
-    @State var alertBg: Color = .red
-    @State var alertFg: Color = .white
+    @State var alertBgColor: Color = .red
+    @State var alertFgColor: Color = .white
     @State var isAlertVisible: Bool = false
     @State var saveBtnBg: Color = .accentColor
     @State var saveBtnSymbol: String = "checkmark"
@@ -37,6 +37,147 @@ struct AddView: View {
         .navigationTitle("Composing a Task")
     }
     
+    // MARK: Functions
+    
+    func flashAlert(text: String, bgColor: Color = Color.red, fgColor: Color = Color.white, duration: Double = 15.0) {
+        alertTitle = text
+        alertBgColor = bgColor
+        alertFgColor = fgColor
+    
+        // In case the alert is already visible, hide it, and slide it back in after 1/2 a second
+        guard !isAlertVisible else {
+            isAlertVisible = false
+            
+            DispatchQueue.main.asyncAfter(
+                deadline: .now() + 0.5,
+                execute: {
+                    showAlert(duration: duration)
+                }
+            )
+            
+            return
+        }
+        
+        showAlert(duration: duration)
+    }
+    
+    private func showAlert(duration: Double = 15.0) {
+        withAnimation(.linear(duration: 0.2), {
+            isAlertVisible = true
+        })
+        
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + duration,
+            execute: {
+                withAnimation(.linear, {
+                    isAlertVisible = false
+                })
+            }
+        )
+    }
+    
+    func simpleVibration(feedback: UINotificationFeedbackGenerator.FeedbackType) {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(feedback)
+    }
+    
+    func isTextPrepared() -> Bool {
+        return textFieldText.count >= 3
+    }
+    
+    func saveBtnPressed() {
+        // If save is clicked, but less than 3 characters are in the text field
+        guard isTextPrepared() else {
+            saveBtnBg = .red
+            saveBtnSymbol = "xmark"
+            
+            flashAlert(
+                text: isAlertVisible
+                ? "Task is too short. Please enter at least 3 characters." // Provide second text if they click-spam for UX
+                : "Tasks must be at least 3 characters in length 📏"
+            )
+            simpleVibration(feedback: .warning)
+            
+            // 3s later, restore the button's color & symbol
+            DispatchQueue.main.asyncAfter(
+                deadline: .now() + 3,
+                execute: {
+                    saveBtnBg = Color.accentColor
+                    saveBtnSymbol = "checkmark"
+                }
+            )
+            
+            return
+        }
+        
+        // Otherwise, save is successful
+        
+        saveBtnBg = .green
+        saveBtnSymbol = "plus"
+        
+        clearBtnWidth = 0
+        
+        simpleVibration(feedback: .success)
+        
+        listViewModel.addItem(title: textFieldText)
+        
+        // Short delay to visually display animation before transitioning back to list
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: {
+            presentationMode.wrappedValue.dismiss()
+        })
+    }
+    
+    func clearBtnPressed() {
+        // Capture future btn result, which is an inversion of if the str is empty
+        let success: Bool = !textFieldText.isEmpty
+        
+        textFieldText = ""
+        
+        if success {
+            simpleVibration(feedback: .success)
+            flashAlert(
+                text: "Text field cleared",
+                bgColor: .accentColor,
+                duration: 4.0
+            )
+        } else {
+            simpleVibration(feedback: .warning)
+        }
+        
+        // Animate button color transition + change symbol
+        withAnimation(.linear, {
+            clearBtnBg = success ? .green : .red
+        })
+        
+        clearBtnSymbol = success ? "checkmark" : "xmark"
+        
+        // Reset btn attributes w/ animation after 1s
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + 3,
+            execute: {
+                withAnimation(.linear, {
+                    clearBtnBg = .red
+                })
+                
+                clearBtnSymbol = "trash.fill"
+        })
+    }
+}
+
+// MARK: Preview
+
+struct AddView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationView {
+            AddView()
+        }
+        .environmentObject(ListViewModel())
+    }
+}
+
+// MARK: Components
+
+extension AddView {
     private var formLayer: some View {
         VStack {
             HStack {
@@ -76,155 +217,18 @@ struct AddView: View {
         HStack {
             Text(alertTitle)
                 .padding(15)
-                .foregroundColor(alertFg)
+                .foregroundColor(alertFgColor)
         }
         .frame(maxWidth: .infinity)
-        .background(alertBg)
+        .background(alertBgColor)
         .cornerRadius(10)
-        .foregroundColor(alertFg)
+        .foregroundColor(alertFgColor)
         .padding(.bottom, 10)
-        .overlay(alignment: .trailing, content: {
-            ZStack {
-                Circle()
-                    .fill(.white)
-                    .frame(width: 35, height: 35)
-                Image(systemName: "xmark")
-                    .imageScale(.medium)
-                    .foregroundColor(.black)
-                Circle()
-                    .stroke(lineWidth: 1)
-                    .fill(.black)
-                    .frame(width: 35, height: 35)
-            }
-            .offset(x: 5, y: -35)
-            .onTapGesture {
-                withAnimation(.linear(duration: 0.1), {
-                    isAlertVisible = false
-                })
-            }
-        })
         .transition(.move(edge: .bottom))
-    }
-    
-    // MARK: Functions
-    
-    func isTextPrepared() -> Bool {
-        return textFieldText.count >= 3
-    }
-    
-    func saveBtnPressed() {
-        guard textFieldText.count > 3 else {
-            saveBtnBg = .red
-            saveBtnSymbol = "xmark"
-            
-            flashAlert(
-                text: isAlertVisible
-                ? "Task is too short. Please enter at least 3 characters." // Provide second text if they click-spam for UX
-                : "Tasks must be at least 3 characters in length 📏"
-            )
-            
-            DispatchQueue.main.asyncAfter(
-                deadline: .now() + 3,
-                execute: {
-                    saveBtnBg = Color.accentColor
-                    saveBtnSymbol = "checkmark"
-                }
-            )
-            
-            return
+        .onTapGesture {
+            withAnimation(.linear(duration: 0.1), {
+                isAlertVisible = false
+            })
         }
-        
-        // Otherwise, save is successful
-        
-        saveBtnBg = .green
-        saveBtnSymbol = "plus"
-        
-        clearBtnWidth = 0
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
-            listViewModel.addItem(title: textFieldText)
-            presentationMode.wrappedValue.dismiss()
-        })
-    }
-    
-    func clearBtnPressed() {
-        // Capture future btn result, which is an inversion of if the str is empty
-        let success: Bool = !textFieldText.isEmpty
-        
-        textFieldText = ""
-        
-        if success {
-            flashAlert(
-                text: "Text field cleared",
-                bgColor: .accentColor,
-                duration: 4.0
-            )
-        }
-        
-        // Animate button color transition + change symbol
-        withAnimation(.linear, {
-            clearBtnBg = success ? .green : .red
-        })
-        
-        clearBtnSymbol = success ? "checkmark" : "xmark"
-        
-        // Reset btn attributes w/ animation after 1s
-        DispatchQueue.main.asyncAfter(
-            deadline: .now() + 3,
-            execute: {
-                withAnimation(.linear, {
-                    clearBtnBg = .red
-                })
-                
-                clearBtnSymbol = "trash.fill"
-        })
-    }
-    
-    func flashAlert(text: String, bgColor: Color = Color.red, fgColor: Color = Color.white, duration: Double = 15.0) {
-        alertTitle = text
-        alertBg = bgColor
-        alertFg = fgColor
-    
-        // In case the alert is already visible, hide it, and slide it back in after 1/2 a second
-        guard !isAlertVisible else {
-            isAlertVisible = false
-            
-            DispatchQueue.main.asyncAfter(
-                deadline: .now() + 0.5,
-                execute: {
-                    showAlert(duration: duration)
-                }
-            )
-            
-            return
-        }
-        
-        showAlert(duration: duration)
-    }
-    
-    private func showAlert(duration: Double = 15.0) {
-        withAnimation(.linear(duration: 0.2), {
-            isAlertVisible = true
-        })
-        
-        DispatchQueue.main.asyncAfter(
-            deadline: .now() + duration,
-            execute: {
-                withAnimation(.linear, {
-                    isAlertVisible = false
-                })
-            }
-        )
-    }
-}
-
-// MARK: Preview
-
-struct AddView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            AddView()
-        }
-        .environmentObject(ListViewModel())
     }
 }

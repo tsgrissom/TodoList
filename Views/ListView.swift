@@ -13,7 +13,8 @@ struct ListView: View {
                     Image(systemName: "gear")
                 }),
             trailing:
-                EditButton().foregroundColor(.accentColor)
+                EditButton()
+                .foregroundColor(.accentColor)
         )
     }
     
@@ -26,6 +27,29 @@ struct ListView: View {
                     List {
                         ForEach(listViewModel.items) { item in
                             ListRowView(item: item)
+                                .contextMenu(menuItems: {
+                                    Button(action: {
+                                        
+                                    }) {
+                                        Label("Share task", systemImage: "square.and.arrow.up")
+                                    }
+                                    Button(action: {
+                                        
+                                    }) {
+                                        Label("Duplicate task", systemImage: "doc.on.doc.fill")
+                                    }
+                                    Button(action: {
+                                        
+                                    }) {
+                                        Label("Edit task", systemImage: "rectangle.and.pencil.and.ellipsis")
+                                    }
+                                    Button(action: {
+                                        
+                                    }) {
+                                        Label("Delete task", systemImage: "trash.fill")
+                                            .foregroundColor(.red)
+                                    }
+                                })
                         }
                         .onDelete(perform: listViewModel.deleteItem)
                         .onMove(perform: listViewModel.moveItem)
@@ -49,29 +73,47 @@ struct ListView: View {
                         }
                     )
                     .padding(.horizontal)
+                    .simultaneousGesture(
+                        TapGesture()
+                            .onEnded { _ in
+                                simpleVibration(feedback: .success)
+                            }
+                    )
                 }
                 
                 Spacer()
                 
-                HStack {
-                    Spacer()
-                    
-                    NavigationLink(
-                        destination: AddView(),
-                        label: {
-                            Circle()
-                                .fill(Color.accentColor)
-                                .frame(width: 65, height: 65)
-                                .overlay(content: {
-                                    Image(systemName: "plus")
-                                        .imageScale(.large)
-                                        .foregroundColor(.white)
+                if listViewModel.items.count >= 2 {
+                    HStack {
+                        Spacer()
+                        
+                        NavigationLink(
+                            destination: AddView(),
+                            label: {
+                                Circle()
+                                    .fill(Color.accentColor)
+                                    .frame(width: 50, height: 50)
+                                    .overlay(content: {
+                                        Image(systemName: "plus")
+                                            .imageScale(.large)
+                                            .foregroundColor(.white)
                                 })
-                    })
-                    .offset(x: -15, y: 300)
+                        })
+                        .offset(x: -15, y: 300)
+                        .simultaneousGesture(
+                            TapGesture()
+                                .onEnded { _ in
+                                    simpleVibration(feedback: .success)
+                                }
+                        )
+                    }
                 }
             }
         }
+    }
+    
+    func simpleVibration(feedback: UINotificationFeedbackGenerator.FeedbackType) {
+        UINotificationFeedbackGenerator().notificationOccurred(feedback)
     }
     
     func isEmpty() -> Bool {
