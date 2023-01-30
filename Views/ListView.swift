@@ -8,7 +8,11 @@ struct ListView: View {
     
     var body: some View {
         let count = listViewModel.items.count
-        let title = count == 0 ? "Tasks" : "Tasks (\(count))"
+        var titleNoun: String = "Task"
+        if count > 1 {
+            titleNoun += "s"
+        }
+        let title = count == 0 ? "No Tasks" : "\(count) \(titleNoun)"
         
         return VStack {
             ZStack {
