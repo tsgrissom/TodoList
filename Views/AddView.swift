@@ -4,22 +4,30 @@ struct AddView: View {
     
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var listViewModel: ListViewModel
-    @FocusState var isFocused: Bool
+    
+    // MARK: Constants
     
     let disabledBtnBg = Color.gray.opacity(0.45)
+    let minLength: Int = 12
+    
+    // MARK: Stateful Vars
     
     @State var textFieldText: String = ""
     @State var alertTitle: String = ""
     @State var alertBgColor: Color = .red
     @State var alertFgColor: Color = .white
     @State var isAlertVisible: Bool = false
-    @State var saveBtnBg: Color = .accentColor
+    @State var saveBtnBgColor: Color = .accentColor
     @State var saveBtnSymbol: String = "checkmark"
-    @State var clearBtnBg: Color = .red
+    @State var clearBtnBgColor: Color = .red
     @State var clearBtnSymbol: String = "trash.fill"
     @State var clearBtnWidth: Double = .infinity
+    @State var clearBtnSuccessAnimated: Bool = false
+    @State var clearBtnFailAnimated: Bool = false
     
-    // MARK: Layers
+    @FocusState var isFocused: Bool
+    
+    // MARK: Body Start
     
     var body: some View {
         ScrollView {
@@ -37,7 +45,7 @@ struct AddView: View {
             
             Spacer()
         }
-        .padding(14)
+        .padding(TodoListApp.edges)
         .navigationTitle("Composing a Task")
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
@@ -46,29 +54,20 @@ struct AddView: View {
         }
     }
     
-    // MARK: Functions
+    // MARK: Event Functions
     
-    func simpleVibration(feedback: UINotificationFeedbackGenerator.FeedbackType) {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(feedback)
-    }
-    
-    func isTextPrepared() -> Bool {
-        return textFieldText.trimmingCharacters(in: .whitespacesAndNewlines).count >= 12
-    }
-    
-    func saveBtnPressed() {
+    func onSaveButtonPress() {
         // If save is clicked, but less than 3 characters are in the text field
         guard isTextPrepared() else {
-            saveBtnBg = .red
+            saveBtnBgColor = .red
             saveBtnSymbol = "xmark"
             
             flashAlert(
                 text: isAlertVisible
-                ? "Task is too short. Please enter at least 12 characters." // Provide second text if they click-spam for UX
-                : "Tasks must be at least 12 characters in length 📏"
+                ? "Task is too short. Please enter at least \(minLength) characters." // Provide second text if they click-spam for UX
+                : "Tasks must be at least \(minLength) characters in length 📏"
             )
-            simpleVibration(feedback: .warning)
+            withSimpleFeedback(feedback: .warning)
             
             if !isFocused {
                 isFocused = true
@@ -76,9 +75,9 @@ struct AddView: View {
             
             // 3s later, restore the button's color & symbol
             DispatchQueue.main.asyncAfter(
-                deadline: .now() + 3,
+                deadline: .now() + 1.5,
                 execute: {
-                    saveBtnBg = Color.accentColor
+                    saveBtnBgColor = Color.accentColor
                     saveBtnSymbol = "checkmark"
                 }
             )
@@ -92,12 +91,14 @@ struct AddView: View {
             isFocused = false
         }
         
-        saveBtnBg = .green
+        saveBtnBgColor = .green
         saveBtnSymbol = "plus"
         
-        clearBtnWidth = 0
+        withAnimation(.easeInOut) {
+            clearBtnWidth = 0
+        }
         
-        simpleVibration(feedback: .success)
+        withSimpleFeedback()
         
         listViewModel.addItem(title: textFieldText)
         
@@ -107,43 +108,70 @@ struct AddView: View {
         })
     }
     
-    func clearBtnPressed() {
+    func onClearButtonPress() {
         // Capture future btn result, which is an inversion of if the str is empty
         let success: Bool = !textFieldText.isEmpty
         
         if success {
-            simpleVibration(feedback: .success)
+            withSimpleFeedback()
             flashAlert(
                 text: "Text field cleared",
                 bgColor: .accentColor,
-                duration: 4.0
+                duration: 2.0
             )
+            withAnimation(.easeOut(duration: 0.75)) {
+                clearBtnSuccessAnimated = true
+            }
         } else {
-            simpleVibration(feedback: .warning)
+            withSimpleFeedback(feedback: .warning)
+            withAnimation(.easeInOut) {
+                clearBtnFailAnimated = true
+            }
+            DispatchQueue.main.asyncAfter(
+                deadline: .now() + 0.4,
+                execute: {
+                    withAnimation(.easeInOut) {
+                        clearBtnFailAnimated = false
+                    }
+                }
+            )
         }
         
         // Animate button color transition + change symbol
         withAnimation(.linear, {
-            clearBtnBg = success ? .green : .red
+            clearBtnBgColor = success ? .green : .red
         })
-        
-        clearBtnSymbol = success ? "checkmark" : "xmark"
         
         textFieldText = ""
         
         // Reset btn attributes w/ animation after 1s
         DispatchQueue.main.asyncAfter(
-            deadline: .now() + 3,
+            deadline: .now() + 1,
             execute: {
                 withAnimation(.linear, {
-                    clearBtnBg = .red
+                    clearBtnBgColor = .red
                 })
-                
-                clearBtnSymbol = "trash.fill"
+                withAnimation(.easeIn) {
+                    clearBtnSuccessAnimated = false
+                }
         })
     }
     
-    func flashAlert(text: String, bgColor: Color = Color.red, fgColor: Color = Color.white, duration: Double = 15.0) {
+    // MARK: Functions
+    
+    func withSimpleFeedback(feedback: UINotificationFeedbackGenerator.FeedbackType = .success) {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(feedback)
+    }
+    
+    func isTextPrepared() -> Bool {
+        return textFieldText.trimmingCharacters(in: .whitespacesAndNewlines).count >= minLength
+    }
+    
+    func flashAlert(
+        text: String, bgColor: Color = Color.red,
+        fgColor: Color = Color.white, duration: Double = 15.0
+    ) {
         alertTitle = text
         alertBgColor = bgColor
         alertFgColor = fgColor
@@ -181,18 +209,7 @@ struct AddView: View {
     }
 }
 
-// MARK: Preview
-
-struct AddView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            AddView()
-        }
-        .environmentObject(ListViewModel())
-    }
-}
-
-// MARK: Components
+// MARK: Layers + Components
 
 extension AddView {
     private var formLayer: some View {
@@ -216,25 +233,29 @@ extension AddView {
     private var ctrlButtonRow: some View {
         HStack {
             Button(
-                action: saveBtnPressed,
+                action: onSaveButtonPress,
                 label: {
                 Image(systemName: saveBtnSymbol)
                     .foregroundColor(.white)
                     .imageScale(.large)
                     .frame(height: 55)
                     .frame(maxWidth: .infinity)
-                    .background(isTextPrepared() ? saveBtnBg : disabledBtnBg)
+                    .background(isTextPrepared() ? saveBtnBgColor : disabledBtnBg)
                     .cornerRadius(10)
             })
             Spacer()
-            Button(action: clearBtnPressed, label: {
-                Image(systemName: clearBtnSymbol)
-                    .foregroundColor(.white)
-                    .imageScale(.large)
+            Button(action: onClearButtonPress, label: {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(clearBtnBgColor)
                     .frame(height: 55)
                     .frame(maxWidth: clearBtnWidth)
-                    .background(!textFieldText.isEmpty ? clearBtnBg : disabledBtnBg)
-                    .cornerRadius(10)
+                    .overlay {
+                        Image(systemName: clearBtnSymbol)
+                            .rotationEffect(.degrees(clearBtnSuccessAnimated ? 180 : 0))
+                            .offset(x: clearBtnFailAnimated ? -5 : 0)
+                            .imageScale(.large)
+                            .foregroundColor(.white)
+                    }
             })
         }
     }
@@ -275,9 +296,20 @@ extension AddView {
         .foregroundColor(alertFgColor)
         .transition(.move(edge: .bottom))
         .onTapGesture {
-            withAnimation(.linear(duration: 0.1), {
+            withAnimation(.easeInOut(duration: 0.2), {
                 isAlertVisible = false
             })
         }
+    }
+}
+
+// MARK: Preview
+
+struct AddView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationView {
+            AddView()
+        }
+        .environmentObject(ListViewModel())
     }
 }

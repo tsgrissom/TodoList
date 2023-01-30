@@ -1,12 +1,8 @@
-//
-//  ListRowView.swift
-//  TodoList
-//
-//  Created by Tyler Grissom on 1/10/23.
-//
-
 import SwiftUI
 
+/*
+ Subview of ListView which contains the layout for each individual task item, represented as a row of a List
+ */
 struct ListRowView: View {
     
     @Environment(\.colorScheme) var colorScheme
@@ -17,11 +13,12 @@ struct ListRowView: View {
     var body: some View {
         HStack {
             let checkboxFgColor: Color = colorScheme == .dark ? .white : .black
-            Image(systemName: item.isCompleted ? "checkmark.circle" : "circle")
+            let checkboxSymbol = item.isCompleted ? "checkmark.circle" : "circle"
+            Image(systemName: checkboxSymbol)
                 .foregroundColor(item.isCompleted ? .accentColor : checkboxFgColor)
                 .onTapGesture {
                     listViewModel.updateItem(item: item)
-                    simpleVibration(feedback: .success)
+                    withSimpleFeedback()
                 }
             NavigationLink(destination: EditView(item: item)) {
                 Text(item.title)
@@ -30,11 +27,21 @@ struct ListRowView: View {
         }
         .font(.title2)
         .padding(.vertical, 8)
+        .simultaneousGesture(
+            TapGesture().onEnded { _ in
+                withImpact(style: .light)
+            }
+        )
+        
     }
     
-    func simpleVibration(feedback: UINotificationFeedbackGenerator.FeedbackType) {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(feedback)
+    private func withSimpleFeedback(type: UINotificationFeedbackGenerator.FeedbackType = .success) {
+        UINotificationFeedbackGenerator().notificationOccurred(type)
+    }
+    
+    private func withImpact(style: UIImpactFeedbackGenerator.FeedbackStyle = .medium, intensity: CGFloat = 1) {
+        UIImpactFeedbackGenerator(style: style)
+            .impactOccurred(intensity: intensity)
     }
     
     func isDarkMode() -> Bool {

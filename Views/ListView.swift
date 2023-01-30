@@ -1,10 +1,12 @@
 import SwiftUI
+import CoreHaptics
 
 struct ListView: View {
    
     @EnvironmentObject var listViewModel: ListViewModel
     
     @State var isAnimated: Bool = false
+    @State var engine: CHHapticEngine?
     
     var body: some View {
         let count = listViewModel.items.count
@@ -18,24 +20,68 @@ struct ListView: View {
                         leading:
                             NavigationLink(destination: SettingsView(), label: {
                                 Image(systemName: "gear")
-                            }),
-                        trailing:
-                            EditButton()
-                            .foregroundColor(.accentColor)
+                            })
+                        ,
+                        trailing: EditButton().foregroundColor(.accentColor)
                     )
                 }
         }
     }
     
-    func simpleVibration(feedback: UINotificationFeedbackGenerator.FeedbackType) {
-        UINotificationFeedbackGenerator().notificationOccurred(feedback)
+    func prepareHaptics() {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        
+        do {
+            engine = try CHHapticEngine()
+            try engine?.start()
+        } catch {
+            print("There was an error creating the engine: \(error.localizedDescription)")
+        }
     }
     
-    func isEmpty() -> Bool {
+    // MARK: Functions
+    
+    private func withComplexFeedback() {
+        // make sure that the device supports haptics
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        var events = [CHHapticEvent]()
+
+        // create one intense, sharp tap
+        let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: 1)
+        let sharpness = CHHapticEventParameter(parameterID: .hapticSharpness, value: 1)
+        let event = CHHapticEvent(eventType: .hapticTransient, parameters: [intensity, sharpness], relativeTime: 0)
+        events.append(event)
+
+        // convert those events into a pattern and play it immediately
+        do {
+            let pattern = try CHHapticPattern(events: events, parameters: [])
+            let player = try engine?.makePlayer(with: pattern)
+            try player?.start(atTime: 0)
+        } catch {
+            print("Failed to play pattern: \(error.localizedDescription).")
+        }
+    }
+    
+    private func withSimpleFeedback(type: UINotificationFeedbackGenerator.FeedbackType = .success) {
+        UINotificationFeedbackGenerator().notificationOccurred(type)
+    }
+    
+    private func withImpact(style: UIImpactFeedbackGenerator.FeedbackStyle = .medium, intensity: CGFloat = 1) {
+        UIImpactFeedbackGenerator(style: style)
+            .impactOccurred(intensity: intensity)
+    }
+    
+    /*
+     Checks if the tasks array is empty
+     */
+    private func isEmpty() -> Bool {
         return listViewModel.items.isEmpty
     }
     
-    func hasAnyCompleted() -> Bool {
+    /*
+     Checks if any of the tasks are checked off
+     */
+    private func hasAnyCompleted() -> Bool {
         if (isEmpty()) {
             return false
         }
@@ -49,7 +95,10 @@ struct ListView: View {
         return false
     }
     
-    func duplicateTask(item: ItemModel) {
+    /*
+     Duplicates the provided task, inserting it in front of the duplicated element in the array
+     */
+    private func duplicateTask(item: ItemModel) {
         if let idx = listViewModel.items.firstIndex(where: { $0.id == item.id }) {
             listViewModel.items.insert(
                 ItemModel(title: item.title, isCompleted: item.isCompleted),
@@ -57,21 +106,13 @@ struct ListView: View {
         }
     }
     
-    func deleteTask(item: ItemModel) {
+    /*
+     Deletes the provided task
+     */
+    private func deleteTask(item: ItemModel) {
         if let idx = listViewModel.items.firstIndex(where: { $0.id == item.id }) {
             listViewModel.items.remove(at: idx)
         }
-    }
-}
-
-// MARK: Preview
-
-struct ListView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            ListView()
-        }
-        .environmentObject(ListViewModel())
     }
 }
 
@@ -80,32 +121,17 @@ struct ListView_Previews: PreviewProvider {
 extension ListView {
     private var foregroundLayer: some View {
         VStack {
-            if (isEmpty()) {
+            if isEmpty() {
                 NoItemsView()
             } else {
                 List {
                     ForEach(listViewModel.items) { item in
                         ListRowView(item: item)
                             .contextMenu(menuItems: {
-                                Button(action: {
-                                    
-                                }) {
-                                    Label("Share task", systemImage: "square.and.arrow.up")
-                                }
-                                Button(action: {
-                                    duplicateTask(item: item)
-                                }) {
-                                    Label("Duplicate task", systemImage: "doc.on.doc.fill")
-                                }
-                                NavigationLink(destination: EditView(item: item)) {
-                                    Label("Edit task", systemImage: "rectangle.and.pencil.and.ellipsis")
-                                }
-                                Button(action: {
-                                    deleteTask(item: item)
-                                }) {
-                                    Label("Delete task", systemImage: "trash.fill")
-                                }
-                                .foregroundColor(.red)
+                                cmShareButton(item: item)
+                                cmDuplicateButton(item: item)
+                                cmEditButton(item: item)
+                                cmDeleteButton(item: item)
                             })
                     }
                     .onDelete(perform: listViewModel.deleteItem)
@@ -114,14 +140,46 @@ extension ListView {
             }
             
             if listViewModel.items.count < 1 {
-                Spacer(); onboardingButton; Spacer()
+                Spacer()
+                onboardingButton
+                Spacer()
             } else {
+                Spacer()
                 HStack {
                     Spacer()
-                    
                     quickAddButton
                 }
             }
+        }
+    }
+    
+    private func cmShareButton(item: ItemModel) -> some View {
+        Button(action: {
+            // Offer a share sheet for the provided ItemModel
+        }, label: {
+            Label("Share task", systemImage: "square.and.arrow.up")
+        })
+    }
+    
+    private func cmDuplicateButton(item: ItemModel) -> some View {
+        Button(action: {
+            duplicateTask(item: item)
+        }) {
+            Label("Duplicate task", systemImage: "doc.on.doc.fill")
+        }
+    }
+    
+    private func cmEditButton(item: ItemModel) -> some View {
+        NavigationLink(destination: EditView(item: item)) {
+            Label("Edit task", systemImage: "rectangle.and.pencil.and.ellipsis")
+        }
+    }
+    
+    private func cmDeleteButton(item: ItemModel) -> some View {
+        Button(action: {
+            deleteTask(item: item)
+        }) {
+            Label("Delete task", systemImage: "trash.fill")
         }
     }
     
@@ -132,14 +190,7 @@ extension ListView {
             NavigationLink(
                 destination: AddView(),
                 label: {
-                    Text("Begin Composing")
-                        .foregroundColor(.white)
-                        .font(.headline)
-                        .frame(height: 55)
-                        .frame(maxWidth: 200)
-                        .background(Color.accentColor)
-                        .cornerRadius(10)
-                        .transition(.move(edge: .leading))
+                    beginComposingButton
                 }
             )
             .padding(.horizontal)
@@ -148,7 +199,7 @@ extension ListView {
             .simultaneousGesture(
                 TapGesture()
                     .onEnded { _ in
-                        simpleVibration(feedback: .success)
+                        withSimpleFeedback()
                     }
             )
         }
@@ -160,6 +211,17 @@ extension ListView {
                 }
             }
         }
+    }
+    
+    private var beginComposingButton: some View {
+        Text("Begin Composing")
+            .foregroundColor(.white)
+            .font(.headline)
+            .frame(height: 55)
+            .frame(maxWidth: 200)
+            .background(Color.accentColor)
+            .cornerRadius(10)
+            .transition(.move(edge: .leading))
     }
     
     private var quickAddButton: some View {
@@ -175,12 +237,23 @@ extension ListView {
                             .foregroundColor(.white)
                 })
         })
-        .offset(x: -5)
+        .offset(x: -10)
         .simultaneousGesture(
             TapGesture()
                 .onEnded { _ in
-                    simpleVibration(feedback: .success)
+                    withImpact(style: .light)
                 }
         )
+    }
+}
+
+// MARK: Preview
+
+struct ListView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationView {
+            ListView()
+        }
+        .environmentObject(ListViewModel())
     }
 }

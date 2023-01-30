@@ -4,6 +4,8 @@ struct SettingsView: View {
     
     @EnvironmentObject var listViewModel: ListViewModel
     
+    // MARK: Stateful Vars
+    
     @State var showAlert: Bool = false
     @State var isDebugEnabled: Bool = UserDefaults.standard.bool(forKey: "DebugEnabled")
     @State var shouldAlphabetize: Bool = UserDefaults.standard.bool(forKey: "AlphabetizeList")
@@ -12,24 +14,15 @@ struct SettingsView: View {
     @State var shouldAutoDeleteTaskOnCheckoff: Bool = UserDefaults.standard.bool(forKey: "AutoDeleteTaskOnCheckoff")
     @State var appTheme: String = UserDefaults.standard.string(forKey: "Theme") ?? "Default"
     
+    // MARK: Body Start
+    
     var body: some View {
         NavigationView {
             contentLayer
         }
     }
     
-    var contentLayer: some View {
-        VStack {
-            List {
-                listPreferencesSection
-                listBehaviorSection
-                listMiscSection
-            }
-            .tint(.accentColor)
-            Spacer()
-        }
-        .navigationTitle("Settings")
-    }
+    // MARK: Functions
     
     func getClearConfirmAlert() -> Alert {
         Alert(
@@ -43,16 +36,23 @@ struct SettingsView: View {
     }
 }
 
-struct SettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        SettingsView()
-            .environmentObject(ListViewModel())
-    }
-}
-
-// MARK: List Sections
+// MARK: Layers + Components
 
 extension SettingsView {
+    var contentLayer: some View {
+        VStack {
+            List {
+                listPreferencesSection
+                listBehaviorSection
+                listMiscSection
+            }
+            .tint(.accentColor)
+            Spacer()
+        }
+        .padding(TodoListApp.edges)
+        .navigationTitle("Settings")
+    }
+    
     var listPreferencesSection: some View {
         Section("Application preferences") {
             Picker("App theme", selection: $appTheme, content: {
@@ -99,5 +99,14 @@ extension SettingsView {
                 .alert(isPresented: $showAlert, content: getClearConfirmAlert)
             }
         }
+    }
+}
+
+// MARK: Preview
+
+struct SettingsView_Previews: PreviewProvider {
+    static var previews: some View {
+        SettingsView()
+            .environmentObject(ListViewModel())
     }
 }
