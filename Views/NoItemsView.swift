@@ -22,7 +22,7 @@ struct NoItemsView: View {
 
 struct NoItemsView_Previews: PreviewProvider {
     static var previews: some View {
-        NavigationView {
+        NavigationStack {
             NoItemsView()
                 .navigationTitle("Taskmaster")
         }

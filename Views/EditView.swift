@@ -288,7 +288,7 @@ extension EditView {
 
 struct EditView_Previews: PreviewProvider {
     static var previews: some View {
-        NavigationView {
+        NavigationStack {
             EditView(item: ItemModel(
                 title: "Lorem ipsum dolor...",
                 isCompleted: false

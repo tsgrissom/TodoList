@@ -298,7 +298,7 @@ extension AddView {
 
 struct AddView_Previews: PreviewProvider {
     static var previews: some View {
-        NavigationView {
+        NavigationStack {
             AddView()
         }
         .environmentObject(ListViewModel())

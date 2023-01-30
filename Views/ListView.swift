@@ -1,11 +1,10 @@
 import SwiftUI
-import CoreHaptics
 
 struct ListView: View {
    
     @EnvironmentObject var listViewModel: ListViewModel
     
-    @State var isAnimated: Bool = false
+    @State var animateButtonSlide: Bool = false
     
     var body: some View {
         let count = listViewModel.items.count
@@ -61,6 +60,7 @@ struct ListView: View {
             listViewModel.items.insert(
                 ItemModel(title: item.title, isCompleted: item.isCompleted),
                 at: idx)
+            listViewModel.saveItems()
         }
     }
     
@@ -70,6 +70,7 @@ struct ListView: View {
     private func deleteTask(item: ItemModel) {
         if let idx = listViewModel.items.firstIndex(where: { $0.id == item.id }) {
             listViewModel.items.remove(at: idx)
+            listViewModel.saveItems()
         }
     }
 }
@@ -77,6 +78,7 @@ struct ListView: View {
 // MARK: Components
 
 extension ListView {
+    
     private var foregroundLayer: some View {
         VStack {
             if isEmpty() {
@@ -87,9 +89,15 @@ extension ListView {
                         ListRowView(item: item)
                             .contextMenu(menuItems: {
                                 cmShareButton(item: item)
+                                cmCopyButton(item: item)
                                 cmDuplicateButton(item: item)
-                                cmEditButton(item: item)
                                 cmDeleteButton(item: item)
+                            })
+                            .swipeActions(edge: .leading, content: {
+                                Button(item.isCompleted ? "Incompleted" : "Completed", action: {
+                                    listViewModel.updateItem(item: item)
+                                })
+                                .tint(item.isCompleted ? .red : .green)
                             })
                     }
                     .onDelete(perform: listViewModel.deleteItem)
@@ -111,31 +119,40 @@ extension ListView {
         }
     }
     
-    private func cmShareButton(item: ItemModel) -> some View {
+    private func cmCopyButton(item: ItemModel) -> some View {
         Button(action: {
-            // Offer a share sheet for the provided ItemModel
+            UIPasteboard.general.string = item.title
+            Haptics.withImpact(style: .light)
         }, label: {
-            Label("Share task", systemImage: "square.and.arrow.up")
+            Label("Copy", systemImage: "clipboard")
         })
     }
     
     private func cmDuplicateButton(item: ItemModel) -> some View {
         Button(action: {
-            duplicateTask(item: item)
+            withAnimation(.linear) {
+                duplicateTask(item: item)
+            }
+            Haptics.withSimpleFeedback()
         }) {
-            Label("Duplicate task", systemImage: "doc.on.doc.fill")
+            Label("Duplicate", systemImage: "doc.on.doc")
         }
     }
     
-    private func cmEditButton(item: ItemModel) -> some View {
-        NavigationLink(destination: EditView(item: item)) {
-            Label("Edit task", systemImage: "rectangle.and.pencil.and.ellipsis")
-        }
+    private func cmShareButton(item: ItemModel) -> some View {
+        Button(action: {
+            // Offer a share sheet for the provided ItemModel
+        }, label: {
+            Label("Share", systemImage: "square.and.arrow.up")
+        })
     }
     
     private func cmDeleteButton(item: ItemModel) -> some View {
-        Button(action: {
-            deleteTask(item: item)
+        Button(role: .destructive, action: {
+            withAnimation(.linear) {
+                deleteTask(item: item)
+            }
+            Haptics.withSimpleFeedback()
         }) {
             Label("Delete task", systemImage: "trash.fill")
         }
@@ -161,11 +178,11 @@ extension ListView {
                     }
             )
         }
-        .offset(y: isAnimated ? -200 : 0)
+        .offset(y: animateButtonSlide ? -200 : 0)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                withAnimation(.linear) {
-                    isAnimated = true
+                withAnimation(.easeInOut(duration: 0.75)) {
+                    animateButtonSlide = true
                 }
             }
         }
@@ -209,7 +226,7 @@ extension ListView {
 
 struct ListView_Previews: PreviewProvider {
     static var previews: some View {
-        NavigationView {
+        NavigationStack {
             ListView()
         }
         .environmentObject(ListViewModel())

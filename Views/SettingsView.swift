@@ -17,9 +17,7 @@ struct SettingsView: View {
     // MARK: Body Start
     
     var body: some View {
-        NavigationView {
-            contentLayer
-        }
+        contentLayer
     }
     
     // MARK: Functions
@@ -49,7 +47,7 @@ extension SettingsView {
             .tint(.accentColor)
             Spacer()
         }
-        .padding(TodoListApp.edges)
+        .ignoresSafeArea(edges: .bottom)
         .navigationTitle("Settings")
     }
     
@@ -106,7 +104,9 @@ extension SettingsView {
 
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        SettingsView()
-            .environmentObject(ListViewModel())
+        NavigationStack {
+            SettingsView()
+                .environmentObject(ListViewModel())
+        }
     }
 }
