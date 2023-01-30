@@ -15,14 +15,9 @@ struct ListView: View {
                 foregroundLayer
                     .navigationTitle(title)
                     .navigationBarItems(
-                        leading:
-                            NavigationLink(destination: SettingsView(), label: {
-                                Image(systemName: "gear")
-                            })
-                        ,
-                        trailing: EditButton().foregroundColor(.accentColor)
-                    )
-                }
+                        leading: NavigationLink(destination: SettingsView(), label: { Image(systemName: "gear")}),
+                        trailing: EditButton().foregroundColor(.accentColor))
+            }
         }
     }
     
@@ -117,6 +112,7 @@ extension ListView {
                 }
             }
         }
+        .background(Color(UIColor.secondarySystemBackground))
     }
     
     private func cmCopyButton(item: ItemModel) -> some View {
@@ -212,7 +208,7 @@ extension ListView {
                             .foregroundColor(.white)
                 })
         })
-        .offset(x: -10)
+        .offset(x: -15)
         .simultaneousGesture(
             TapGesture()
                 .onEnded { _ in
