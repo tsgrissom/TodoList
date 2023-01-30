@@ -5,27 +5,27 @@ struct EditView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var listViewModel: ListViewModel
     
-    let item: ItemModel
-    let originalText: String
-    let disabledBtnBgColor = Color.gray.opacity(0.45)
-    let minLength: Int = 12
+    // MARK: Constants
+    
+    let item: ItemModel, originalText: String
     
     // MARK: Stateful Vars
-    
-    @State var textFieldText: String = ""
-    @State var alertTitle: String = ""
-    @State var alertFgColor: Color = .white
-    @State var alertBgColor: Color = .red
-    @State var isAlertVisible: Bool = false
-    @State var saveBtnBgColor: Color = .accentColor
-    @State var saveBtnSymbol: String = "checkmark"
+
+    @State var showAlert: Bool = false
+    @State var alertBoxTitle: String = ""
+    @State var alertBoxBgColor: Color = .red
+    @State var alertBoxFgColor: Color = .white
+    @State var alertBoxVisible: Bool = false
     @State var clearBtnAnimated: Bool = false
     @State var clearBtnBgColor: Color = .red
     @State var clearBtnSymbol: String = "trash.fill"
     @State var clearBtnWidth: Double = .infinity
+    @State var saveBtnBgColor: Color = .accentColor
+    @State var saveBtnSymbol: String = "checkmark"
     @State var restoreBtnBgColor: Color = .yellow
     @State var restoreBtnSymbol: String = "square.on.square"
     
+    @State var textFieldText: String = ""
     @FocusState var isFocused: Bool
     
     // MARK: Init
@@ -45,7 +45,7 @@ struct EditView: View {
             
             Spacer()
             
-            if isAlertVisible {
+            if alertBoxVisible {
                 alertBoxLayer
             }
             
@@ -63,13 +63,15 @@ struct EditView: View {
     // MARK: Event Functions
     
     func onSaveButtonPress() {
+        let minLength = TodoListApp.minTaskLength
+        
         guard textFieldText.count >= minLength else {
             saveBtnBgColor = .red
             saveBtnSymbol = "xmark"
             
-            withSimpleFeedback(type: .warning)
+            Haptics.withSimpleFeedback(type: .warning)
             flashAlert(
-                text: isAlertVisible
+                text: alertBoxVisible
                 ? "Task is too short. Please enter at least \(minLength) characters." // Provide second text if they click-spam for UX
                 : "Tasks must be at least \(minLength) characters in length 📏"
             )
@@ -85,17 +87,15 @@ struct EditView: View {
             return
         }
         
-        let i = ItemModel(id: item.id, title: textFieldText, isCompleted: item.isCompleted)
-        
         saveBtnBgColor = .green
         saveBtnSymbol = "plus"
         
         clearBtnWidth = 0
         
-        withSimpleFeedback()
+        Haptics.withSimpleFeedback()
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
-            listViewModel.updateItem(item: i)
+            listViewModel.updateItem(item: ItemModel(id: item.id, title: textFieldText, isCompleted: item.isCompleted))
             presentationMode.wrappedValue.dismiss()
         })
     }
@@ -108,7 +108,7 @@ struct EditView: View {
                 clearBtnSymbol = "trash.fill"
             }
             
-            withSimpleFeedback(type: .warning)
+            Haptics.withSimpleFeedback(type: .warning)
             
             return
         }
@@ -122,7 +122,7 @@ struct EditView: View {
             clearBtnAnimated = true
         }
         
-        withSimpleFeedback()
+        Haptics.withSimpleFeedback()
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             withAnimation(.easeIn) {
@@ -133,40 +133,46 @@ struct EditView: View {
     }
     
     func onRestoreButtonPress() {
-        let success = !textFieldText.isEmpty
-        textFieldText = originalText
-        if success {
-            withSimpleFeedback()
+        if !textFieldText.isEmpty {
+            Haptics.withSimpleFeedback(type: .warning)
+            
+            return
         }
+        
+        textFieldText = originalText
+        Haptics.withSimpleFeedback()
     }
     
     // MARK: Functions
     
-    private func getTrimmedText() -> String {
+    func getRestoreConfirmAlert() -> Alert {
+        Alert(
+            title: Text("Clear what you've written?"),
+            message: Text("This action cannot be undone"),
+            primaryButton: .destructive(Text("Confirm"), action: {
+                textFieldText = originalText
+                Haptics.withSimpleFeedback()
+            }),
+            secondaryButton: .cancel()
+        )
+    }
+    
+    func getTrimmedText() -> String {
         return textFieldText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    private func isTextPrepared() -> Bool {
-        return textFieldText.count >= minLength
-    }
-    
-    private func withSimpleFeedback(type: UINotificationFeedbackGenerator.FeedbackType = .success) {
-        UINotificationFeedbackGenerator().notificationOccurred(type)
-    }
-    
-    private func withImpact(style: UIImpactFeedbackGenerator.FeedbackStyle = .medium, intensity: CGFloat = 1) {
-        UIImpactFeedbackGenerator(style: style)
-            .impactOccurred(intensity: intensity)
+    func isTextPrepared() -> Bool {
+        return getTrimmedText().count >= TodoListApp.minTaskLength
     }
     
     func flashAlert(text: String, bgColor: Color = Color.red, fgColor: Color = Color.white, duration: Double = 15.0) {
-        alertTitle = text
-        alertBgColor = bgColor
-        alertFgColor = fgColor
+        alertBoxTitle = text
+        alertBoxBgColor = bgColor
+        alertBoxFgColor = fgColor
         
         // In case the alert is already visible, hide it, and slide it back in after 1/2 a second
-        guard !isAlertVisible else {
-            isAlertVisible = false
+        guard !alertBoxVisible else {
+            alertBoxVisible = false
             
             DispatchQueue.main.asyncAfter(
                 deadline: .now() + 0.5,
@@ -183,14 +189,14 @@ struct EditView: View {
     
     private func showAlert(duration: Double = 15.0) {
         withAnimation(.linear(duration: 0.2), {
-            isAlertVisible = true
+            alertBoxVisible = true
         })
         
         DispatchQueue.main.asyncAfter(
             deadline: .now() + duration,
             execute: {
                 withAnimation(.linear, {
-                    isAlertVisible = false
+                    alertBoxVisible = false
                 })
             }
         )
@@ -227,7 +233,7 @@ extension EditView {
                         .imageScale(.large)
                         .frame(height: 55)
                         .frame(maxWidth: .infinity)
-                        .background(isEqualToOriginal ? disabledBtnBgColor : saveBtnBgColor)
+                        .background(isEqualToOriginal ? Color.gray.opacity(0.45) : saveBtnBgColor)
                         .cornerRadius(10)
                 }
                 Spacer()
@@ -249,29 +255,30 @@ extension EditView {
                 }
                 .fontWeight(.bold)
                 .padding(.leading)
-                .padding(.top)
+                .padding(.top, 5)
+                .padding(.bottom, 3)
                 .foregroundColor(restoreBtnBgColor)
                 .frame(height: 20)
-                Spacer()
             }
+            .padding(.top)
         }
     }
     
     private var alertBoxLayer: some View {
         HStack {
-            Text(alertTitle)
+            Text(alertBoxTitle)
                 .padding(15)
-                .foregroundColor(alertFgColor)
+                .foregroundColor(alertBoxFgColor)
         }
         .frame(maxWidth: .infinity)
-        .background(alertBgColor)
+        .background(alertBoxBgColor)
         .cornerRadius(10)
-        .foregroundColor(alertFgColor)
+        .foregroundColor(alertBoxFgColor)
         .padding(.top, 10)
         .transition(.move(edge: .bottom))
         .onTapGesture {
             withAnimation(.easeInOut(duration: 0.2), {
-                isAlertVisible = false
+                alertBoxVisible = false
             })
         }
     }

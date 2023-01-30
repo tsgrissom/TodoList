@@ -18,7 +18,7 @@ struct ListRowView: View {
                 .foregroundColor(item.isCompleted ? .accentColor : checkboxFgColor)
                 .onTapGesture {
                     listViewModel.updateItem(item: item)
-                    withSimpleFeedback()
+                    Haptics.withSimpleFeedback()
                 }
             NavigationLink(destination: EditView(item: item)) {
                 Text(item.title)
@@ -27,21 +27,6 @@ struct ListRowView: View {
         }
         .font(.title2)
         .padding(.vertical, 8)
-        .simultaneousGesture(
-            TapGesture().onEnded { _ in
-                withImpact(style: .light)
-            }
-        )
-        
-    }
-    
-    private func withSimpleFeedback(type: UINotificationFeedbackGenerator.FeedbackType = .success) {
-        UINotificationFeedbackGenerator().notificationOccurred(type)
-    }
-    
-    private func withImpact(style: UIImpactFeedbackGenerator.FeedbackStyle = .medium, intensity: CGFloat = 1) {
-        UIImpactFeedbackGenerator(style: style)
-            .impactOccurred(intensity: intensity)
     }
     
     func isDarkMode() -> Bool {

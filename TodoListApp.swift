@@ -20,6 +20,7 @@ struct TodoListApp: App {
     @StateObject var listViewModel: ListViewModel = ListViewModel()
     
     static let edges = EdgeInsets(top: 14, leading: 14, bottom: 14, trailing: 14)
+    static let minTaskLength = 12
     
     var body: some Scene {
         WindowGroup {

@@ -5,26 +5,21 @@ struct AddView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var listViewModel: ListViewModel
     
-    // MARK: Constants
-    
-    let disabledBtnBg = Color.gray.opacity(0.45)
-    let minLength: Int = 12
-    
     // MARK: Stateful Vars
     
-    @State var textFieldText: String = ""
-    @State var alertTitle: String = ""
-    @State var alertBgColor: Color = .red
-    @State var alertFgColor: Color = .white
-    @State var isAlertVisible: Bool = false
-    @State var saveBtnBgColor: Color = .accentColor
-    @State var saveBtnSymbol: String = "checkmark"
+    @State var alertBoxTitle: String = ""
+    @State var alertBoxBgColor: Color = .red
+    @State var alertBoxFgColor: Color = .white
+    @State var alertBoxVisible: Bool = false
     @State var clearBtnBgColor: Color = .red
     @State var clearBtnSymbol: String = "trash.fill"
     @State var clearBtnWidth: Double = .infinity
     @State var clearBtnSuccessAnimated: Bool = false
     @State var clearBtnFailAnimated: Bool = false
+    @State var saveBtnBgColor: Color = .accentColor
+    @State var saveBtnSymbol: String = "checkmark"
     
+    @State var textFieldText: String = ""
     @FocusState var isFocused: Bool
     
     // MARK: Body Start
@@ -35,7 +30,7 @@ struct AddView: View {
             
             Spacer()
             
-            if isAlertVisible {
+            if alertBoxVisible {
                 alertBoxLayer
             }
             
@@ -63,11 +58,11 @@ struct AddView: View {
             saveBtnSymbol = "xmark"
             
             flashAlert(
-                text: isAlertVisible
-                ? "Task is too short. Please enter at least \(minLength) characters." // Provide second text if they click-spam for UX
-                : "Tasks must be at least \(minLength) characters in length 📏"
+                text: alertBoxVisible
+                ? "Task is too short. Please enter at least \(TodoListApp.minTaskLength) characters." // Provide second text if they click-spam for UX
+                : "Tasks must be at least \(TodoListApp.minTaskLength) characters in length 📏"
             )
-            withSimpleFeedback(feedback: .warning)
+            Haptics.withSimpleFeedback(type: .warning)
             
             if !isFocused {
                 isFocused = true
@@ -98,7 +93,7 @@ struct AddView: View {
             clearBtnWidth = 0
         }
         
-        withSimpleFeedback()
+        Haptics.withSimpleFeedback()
         
         listViewModel.addItem(title: textFieldText)
         
@@ -113,7 +108,7 @@ struct AddView: View {
         let success: Bool = !textFieldText.isEmpty
         
         if success {
-            withSimpleFeedback()
+            Haptics.withSimpleFeedback()
             flashAlert(
                 text: "Text field cleared",
                 bgColor: .accentColor,
@@ -123,7 +118,7 @@ struct AddView: View {
                 clearBtnSuccessAnimated = true
             }
         } else {
-            withSimpleFeedback(feedback: .warning)
+            Haptics.withSimpleFeedback(type: .warning)
             withAnimation(.easeInOut) {
                 clearBtnFailAnimated = true
             }
@@ -159,26 +154,21 @@ struct AddView: View {
     
     // MARK: Functions
     
-    func withSimpleFeedback(feedback: UINotificationFeedbackGenerator.FeedbackType = .success) {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(feedback)
-    }
-    
     func isTextPrepared() -> Bool {
-        return textFieldText.trimmingCharacters(in: .whitespacesAndNewlines).count >= minLength
+        return textFieldText.trimmingCharacters(in: .whitespacesAndNewlines).count >= TodoListApp.minTaskLength
     }
     
     func flashAlert(
         text: String, bgColor: Color = Color.red,
         fgColor: Color = Color.white, duration: Double = 15.0
     ) {
-        alertTitle = text
-        alertBgColor = bgColor
-        alertFgColor = fgColor
+        alertBoxTitle = text
+        alertBoxBgColor = bgColor
+        alertBoxFgColor = fgColor
     
         // In case the alert is already visible, hide it, and slide it back in after 1/2 a second
-        guard !isAlertVisible else {
-            isAlertVisible = false
+        guard !alertBoxVisible else {
+            alertBoxVisible = false
             
             DispatchQueue.main.asyncAfter(
                 deadline: .now() + 0.5,
@@ -195,14 +185,14 @@ struct AddView: View {
     
     private func showAlert(duration: Double = 15.0) {
         withAnimation(.linear(duration: 0.2), {
-            isAlertVisible = true
+            alertBoxVisible = true
         })
         
         DispatchQueue.main.asyncAfter(
             deadline: .now() + duration,
             execute: {
                 withAnimation(.linear, {
-                    isAlertVisible = false
+                    alertBoxVisible = false
                 })
             }
         )
@@ -212,6 +202,7 @@ struct AddView: View {
 // MARK: Layers + Components
 
 extension AddView {
+    
     private var formLayer: some View {
         VStack {
             textFieldRow
@@ -240,7 +231,7 @@ extension AddView {
                     .imageScale(.large)
                     .frame(height: 55)
                     .frame(maxWidth: .infinity)
-                    .background(isTextPrepared() ? saveBtnBgColor : disabledBtnBg)
+                    .background(isTextPrepared() ? saveBtnBgColor : Color.gray.opacity(0.45))
                     .cornerRadius(10)
             })
             Spacer()
@@ -286,18 +277,18 @@ extension AddView {
     
     private var alertBoxLayer: some View {
         HStack {
-            Text(alertTitle)
+            Text(alertBoxTitle)
                 .padding(15)
-                .foregroundColor(alertFgColor)
+                .foregroundColor(alertBoxFgColor)
         }
         .frame(maxWidth: .infinity)
-        .background(alertBgColor)
+        .background(alertBoxBgColor)
         .cornerRadius(5)
-        .foregroundColor(alertFgColor)
+        .foregroundColor(alertBoxFgColor)
         .transition(.move(edge: .bottom))
         .onTapGesture {
             withAnimation(.easeInOut(duration: 0.2), {
-                isAlertVisible = false
+                alertBoxVisible = false
             })
         }
     }
