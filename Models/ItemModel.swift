@@ -4,7 +4,7 @@ import Foundation
 // Recommended practice, all items below are let items, will never change
 
 // Codable-- Decode & encode an item
-struct ItemModel: Identifiable, Codable {
+struct ItemModel: Identifiable, Codable, Equatable {
     let id: String
     let title: String
     let isCompleted: Bool

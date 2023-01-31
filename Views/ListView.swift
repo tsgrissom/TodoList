@@ -2,25 +2,29 @@ import SwiftUI
 
 struct ListView: View {
    
+    let noItemsBlob = "If you're looking to organize your life, Taskmaster can help with that. Press the big purple button above to begin composing your first task."
+    var viewTitle: String {
+        let count = listViewModel.items.count
+        var titleNoun: String = "Task"
+        if count != 1 { // Plurality fix for 0 tasks ("No Tasks") & > 1 task
+            titleNoun += "s"
+        }
+        return count == 0 ? "No Tasks" : "\(count) \(titleNoun)"
+    }
+    
     @EnvironmentObject var listViewModel: ListViewModel
     
     @State var animateButtonSlide: Bool = false
     
     var body: some View {
-        let count = listViewModel.items.count
-        var titleNoun: String = "Task"
-        if count > 1 {
-            titleNoun += "s"
-        }
-        let title = count == 0 ? "No Tasks" : "\(count) \(titleNoun)"
-        
-        return VStack {
+        VStack {
             ZStack {
                 foregroundLayer
-                    .navigationTitle(title)
+                    .navigationTitle(viewTitle)
+                    .navigationBarTitleDisplayMode(.inline)
                     .navigationBarItems(
                         leading: NavigationLink(destination: SettingsView(), label: { Image(systemName: "gear")}),
-                        trailing: EditButton().foregroundColor(.accentColor))
+                        trailing: isEmpty() ? nil : EditButton().foregroundColor(.accentColor))
             }
         }
     }
@@ -77,11 +81,18 @@ struct ListView: View {
 // MARK: Components
 
 extension ListView {
-    
     private var foregroundLayer: some View {
         VStack {
+            if listViewModel.items.count < 1 {
+                Spacer()
+                onboardingButton
+            }
+            
             if isEmpty() {
-                NoItemsView()
+                Text(noItemsBlob)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 15)
+                    .offset(y: animateButtonSlide ? -125 : 0)
             } else {
                 List {
                     ForEach(listViewModel.items) { item in
@@ -93,10 +104,7 @@ extension ListView {
                                 cmDeleteButton(item: item)
                             })
                             .swipeActions(edge: .leading, content: {
-                                Button(item.isCompleted ? "Incompleted" : "Completed", action: {
-                                    listViewModel.updateItem(item: item)
-                                })
-                                .tint(item.isCompleted ? .red : .green)
+                                onSwipeLeadingEdge(item: item)
                             })
                     }
                     .onDelete(perform: listViewModel.deleteItem)
@@ -104,19 +112,22 @@ extension ListView {
                 }
             }
             
-            if listViewModel.items.count < 1 {
+            Spacer()
+            HStack {
                 Spacer()
-                onboardingButton
-                Spacer()
-            } else {
-                Spacer()
-                HStack {
+                if listViewModel.items.count > 1 {
                     Spacer()
                     quickAddButton
                 }
             }
         }
-        .background(Color(UIColor.secondarySystemBackground))
+    }
+    
+    private func onSwipeLeadingEdge(item: ItemModel) -> some View {
+        Button(item.isCompleted ? "Incompleted" : "Completed", action: {
+            listViewModel.updateItem(item: item)
+        })
+        .tint(item.isCompleted ? .red : .green)
     }
     
     private func cmCopyButton(item: ItemModel) -> some View {
@@ -178,7 +189,7 @@ extension ListView {
                     }
             )
         }
-        .offset(y: animateButtonSlide ? -200 : 0)
+        .offset(y: animateButtonSlide ? -100 : 0)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 withAnimation(.easeInOut(duration: 0.75)) {
@@ -189,14 +200,17 @@ extension ListView {
     }
     
     private var beginComposingButton: some View {
-        Text("Begin Composing")
-            .foregroundColor(.white)
-            .font(.headline)
-            .frame(height: 55)
-            .frame(maxWidth: 200)
-            .background(Color.accentColor)
-            .cornerRadius(10)
-            .transition(.move(edge: .leading))
+        ZStack {
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.accentColor)
+                .frame(height: 55)
+                .frame(maxWidth: 200)
+                .shadow(radius: 20, y: 15)
+            Text("Begin Composing")
+                .foregroundColor(.white)
+                .font(.headline)
+        }
+        .transition(.move(edge: .leading))
     }
     
     private var quickAddButton: some View {

@@ -206,14 +206,13 @@ struct EditView: View {
 // MARK: Layers + Components
 
 extension EditView {
-    
     private var formLayer: some View {
         VStack {
             HStack {
                 TextField(originalText, text: $textFieldText)
                     .padding(.horizontal)
                     .frame(height: 45)
-                    .background(Color.gray.opacity(0.3))
+                    .background(Color("TextFieldColor").gradient)
                     .cornerRadius(10)
                     .focused($isFocused)
             }

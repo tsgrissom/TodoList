@@ -202,11 +202,10 @@ struct AddView: View {
 // MARK: Layers + Components
 
 extension AddView {
-    
     private var formLayer: some View {
         VStack {
             textFieldRow
-            ctrlButtonRow
+            controlButtonRow
         }
     }
     
@@ -216,12 +215,12 @@ extension AddView {
                 .focused($isFocused)
                 .padding(.horizontal)
                 .frame(height: 45)
-                .background(Color.gray.opacity(0.2))
+                .background(Color("TextFieldColor").gradient)
                 .cornerRadius(10)
         }
     }
     
-    private var ctrlButtonRow: some View {
+    private var controlButtonRow: some View {
         HStack {
             Button(
                 action: onSaveButtonPress,
