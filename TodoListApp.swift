@@ -6,7 +6,7 @@ struct TodoListApp: App {
     /*
      MVVM Architecture
      Model - Data point
-     View - UI, 1st to tackle
+     View - UI
      ViewModel - Class manages model for view
      */
     
@@ -15,6 +15,7 @@ struct TodoListApp: App {
      Enhanced haptics
      Settings which work
      Left edge swipe
+     Fix bug-- Exit List when last task item is removed
      */
     
     @StateObject var listViewModel: ListViewModel = ListViewModel()
@@ -29,11 +30,5 @@ struct TodoListApp: App {
             }
             .environmentObject(listViewModel)
         }
-    }
-}
-
-struct Previews_TodoListApp_Previews: PreviewProvider {
-    static var previews: some View {
-        /*@START_MENU_TOKEN@*/Text("Hello, World!")/*@END_MENU_TOKEN@*/
     }
 }

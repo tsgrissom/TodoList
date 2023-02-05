@@ -10,7 +10,7 @@ struct ListView: View {
             titleNoun += "s"
         }
         return count == 0 ? "No Tasks" : "\(count) \(titleNoun)"
-    }
+    } // Computed variable to determine title for window
     
     @EnvironmentObject var listViewModel: ListViewModel
     
@@ -124,7 +124,7 @@ extension ListView {
     }
     
     private func onSwipeLeadingEdge(item: ItemModel) -> some View {
-        Button(item.isCompleted ? "Incompleted" : "Completed", action: {
+        Button(item.isCompleted ? "Undo Complete" : "Complete", action: {
             listViewModel.updateItem(item: item)
         })
         .tint(item.isCompleted ? .red : .green)

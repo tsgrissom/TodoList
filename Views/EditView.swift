@@ -135,12 +135,16 @@ struct EditView: View {
     func onRestoreButtonPress() {
         if !textFieldText.isEmpty {
             Haptics.withSimpleFeedback(type: .warning)
-            
-            return
+            restoreBtnSymbol = "xmark"
+        } else {
+            textFieldText = originalText
+            Haptics.withSimpleFeedback()
+            restoreBtnSymbol = "arrow.up"
         }
         
-        textFieldText = originalText
-        Haptics.withSimpleFeedback()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            restoreBtnSymbol = "square.on.square"
+        }
     }
     
     // MARK: Functions
