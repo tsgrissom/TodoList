@@ -41,10 +41,12 @@ struct EditView: View {
     // MARK: Body Start
     
     var body: some View {
-        ScrollView {
+        let padding: CGFloat = UIDevice.current.userInterfaceIdiom == .phone ? 14 : 20
+        
+        return ScrollView {
             VStack {
                 restoreButtonLayer
-                .padding(.vertical, 9)
+                    .padding(.bottom, 8)
                 
                 formLayer
                 controlButtonRow
@@ -63,7 +65,7 @@ struct EditView: View {
                     Spacer()
                 }
             }
-            .padding(TodoListApp.edges)
+            .padding(padding)
             .navigationTitle("Editing Task")
             .onAppear {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {

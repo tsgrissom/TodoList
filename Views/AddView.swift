@@ -26,22 +26,27 @@ struct AddView: View {
     // MARK: Body Start
     
     var body: some View {
-        ScrollView {
-            formLayer
-            
-            Spacer()
-            
-            if alertBoxVisible {
-                alertBoxLayer
+        let padding: CGFloat = UIDevice.current.userInterfaceIdiom == .phone ? 14 : 20
+        
+        return ScrollView {
+            VStack {
+                textFieldRow
+                controlButtonRow
+                
+                Spacer()
+                
+                if alertBoxVisible {
+                    alertBoxLayer
+                }
+                
+                if textFieldText.count >= 1 {
+                    taskPreviewBoxLayer
+                }
+                
+                Spacer()
             }
-            
-            if textFieldText.count >= 1 {
-                taskPreviewBoxLayer
-            }
-            
-            Spacer()
+            .padding(padding)
         }
-        .padding(TodoListApp.edges)
         .navigationTitle("Composing a Task")
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
@@ -207,13 +212,6 @@ struct AddView: View {
 // MARK: Layers + Components
 
 extension AddView {
-    private var formLayer: some View {
-        VStack {
-            textFieldRow
-            controlButtonRow
-        }
-    }
-    
     private var textFieldRow: some View {
         HStack {
             TextField("Type something here...", text: $textFieldText)

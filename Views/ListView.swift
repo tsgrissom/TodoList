@@ -35,8 +35,8 @@ struct ListView: View {
                 HStack {
                     Spacer()
                     quickAddButton
-                        .padding(.trailing, 20)
-                        .padding(.top, height - 175)
+                        .padding(.trailing, 25)
+                        .padding(.top, height - 140)
                 }
             }
         }
