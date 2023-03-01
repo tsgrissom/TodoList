@@ -46,8 +46,10 @@ struct AddView: View {
                 Spacer()
             }
             .padding(padding)
+            .padding(.top, 20)
         }
         .navigationTitle("Composing a Task")
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
                 isFocused = true
@@ -212,12 +214,29 @@ struct AddView: View {
 // MARK: Layers + Components
 
 extension AddView {
+    
+    private func getScreenWidth() -> CGFloat {
+        UIScreen.main.bounds.width
+    }
+    
+    private func getModifiedFrameWidth() -> CGFloat {
+        switch UIDevice.current.userInterfaceIdiom {
+        case .pad:
+            return getScreenWidth() * 0.5
+        case .phone:
+            return getScreenWidth() * 0.85
+        default:
+            return getScreenWidth()
+        }
+    }
+    
     private var textFieldRow: some View {
         HStack {
             TextField("Type something here...", text: $textFieldText)
                 .focused($isFocused)
                 .padding(.horizontal)
                 .frame(height: 45)
+                .frame(maxWidth: getModifiedFrameWidth())
                 .background(Color.theme.textFieldColor.gradient)
                 .cornerRadius(10)
         }
@@ -225,13 +244,14 @@ extension AddView {
     
     private var controlButtonRow: some View {
         HStack {
+            Spacer()
             Button(
                 action: onSaveButtonPress,
                 label: {
                 Image(systemName: saveBtnSymbol)
                     .foregroundColor(.white)
                     .imageScale(.large)
-                    .frame(height: 55)
+                    .frame(height: 45)
                     .frame(maxWidth: .infinity)
                     .background(isTextPrepared() ? saveBtnBgColor : Color.gray.opacity(0.45))
                     .cornerRadius(10)
@@ -240,8 +260,8 @@ extension AddView {
             Button(action: onClearButtonPress, label: {
                 RoundedRectangle(cornerRadius: 10)
                     .fill(clearBtnBgColor)
-                    .frame(height: 55)
-                    .frame(maxWidth: clearBtnWidth)
+                    .frame(height: 45)
+                    .frame(maxWidth: .infinity)
                     .overlay {
                         Image(systemName: clearBtnSymbol)
                             .rotationEffect(.degrees(clearBtnSuccessAnimated ? 180 : 0))
@@ -250,7 +270,9 @@ extension AddView {
                             .foregroundColor(.white)
                     }
             })
+            Spacer()
         }
+        .frame(maxWidth: getModifiedFrameWidth())
     }
     
     private var taskPreviewBoxLayer: some View {
@@ -272,6 +294,7 @@ extension AddView {
             .padding(.horizontal)
             .padding(.bottom)
         }
+        .frame(width: getModifiedFrameWidth())
         .background(.ultraThinMaterial)
         .cornerRadius(5)
         .transition(.move(edge: .leading))
@@ -283,7 +306,7 @@ extension AddView {
                 .padding(15)
                 .foregroundColor(alertBoxFgColor)
         }
-        .frame(maxWidth: .infinity)
+        .frame(width: getModifiedFrameWidth())
         .background(alertBoxBgColor)
         .cornerRadius(5)
         .foregroundColor(alertBoxFgColor)

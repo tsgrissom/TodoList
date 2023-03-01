@@ -66,11 +66,13 @@ struct EditView: View {
                 }
             }
             .padding(padding)
-            .navigationTitle("Editing Task")
-            .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
-                    isFocused = true
-                }
+            .padding(.top, 20)
+        }
+        .navigationTitle("Editing Task")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
+                isFocused = true
             }
         }
     }
@@ -229,6 +231,22 @@ struct EditView: View {
 // MARK: Layers + Components
 
 extension EditView {
+    
+    private func getScreenWidth() -> CGFloat {
+        UIScreen.main.bounds.width
+    }
+    
+    private func getModifiedFrameWidth() -> CGFloat {
+        switch UIDevice.current.userInterfaceIdiom {
+        case .pad:
+            return getScreenWidth() * 0.5
+        case .phone:
+            return getScreenWidth() * 0.85
+        default:
+            return getScreenWidth()
+        }
+    }
+    
     private var formRow: some View {
         HStack {
             TextField(originalText, text: $textFieldText)
@@ -238,11 +256,13 @@ extension EditView {
                 .cornerRadius(10)
                 .focused($isFocused)
         }
+        .frame(width: getModifiedFrameWidth())
     }
     
     private var restoreButtonRow: some View {
         VStack {
             HStack {
+                Spacer()
                 Button(action: onRestoreButtonPress) {
                     Text("Restore original text")
                         .fontWeight(.bold)
@@ -251,9 +271,11 @@ extension EditView {
                 .buttonStyle(.bordered)
                 .tint(restoreBtnBgColor)
                 .frame(height: 20)
+                .frame(maxWidth: .infinity)
                 Spacer()
             }
         }
+        .frame(width: getModifiedFrameWidth())
     }
     
     private var controlButtonRow: some View {
@@ -261,11 +283,12 @@ extension EditView {
         
         return VStack {
             HStack {
+                Spacer()
                 Button(action: onSaveButtonPress) {
                     Image(systemName: saveBtnSymbol)
                         .foregroundColor(.white)
                         .imageScale(.large)
-                        .frame(height: 55)
+                        .frame(height: 45)
                         .frame(maxWidth: .infinity)
                         .background(isEqualToOriginal ? Color.gray.opacity(0.45) : saveBtnBgColor)
                         .cornerRadius(10)
@@ -276,12 +299,14 @@ extension EditView {
                         .rotationEffect(.degrees(clearBtnAnimated ? 180 : 0))
                         .foregroundColor(.white)
                         .imageScale(.large)
-                        .frame(height: 55)
+                        .frame(height: 45)
                         .frame(maxWidth: .infinity)
                         .background(clearBtnBgColor)
                         .cornerRadius(10)
                 }
+                Spacer()
             }
+            .frame(width: getModifiedFrameWidth())
         }
     }
     
@@ -291,7 +316,7 @@ extension EditView {
                 .padding(15)
                 .foregroundColor(alertBoxFgColor)
         }
-        .frame(maxWidth: .infinity)
+        .frame(width: getModifiedFrameWidth())
         .background(alertBoxBgColor)
         .cornerRadius(10)
         .foregroundColor(alertBoxFgColor)
