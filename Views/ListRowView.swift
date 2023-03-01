@@ -5,14 +5,14 @@ import SwiftUI
  */
 struct ListRowView: View {
     
-    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.colorScheme) var systemColorScheme
     @EnvironmentObject var listViewModel: ListViewModel
     
     let item: ItemModel
     
     var body: some View {
         HStack {
-            let checkboxFgColor: Color = colorScheme == .dark ? .white : .black
+            let checkboxFgColor: Color = systemColorScheme == .dark ? .white : .black
             let checkboxSymbol = item.isCompleted ? "checkmark.circle" : "circle"
             Image(systemName: checkboxSymbol)
                 .foregroundColor(item.isCompleted ? .accentColor : checkboxFgColor)
@@ -27,10 +27,6 @@ struct ListRowView: View {
         }
         .font(.title2)
         .padding(.vertical, 8)
-    }
-    
-    func isDarkMode() -> Bool {
-        colorScheme == .dark
     }
 }
 

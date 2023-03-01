@@ -41,21 +41,33 @@ struct EditView: View {
     
     var body: some View {
         ScrollView {
-            formLayer
-            
-            Spacer()
-            
-            if alertBoxVisible {
-                alertBoxLayer
+            VStack {
+                restoreButtonLayer
+                .padding(.vertical, 9)
+                
+                formLayer
+                controlButtonRow
+                
+                Spacer()
+                
+                if alertBoxVisible {
+                    alertBoxLayer
+                        .padding(.top, 10)
+                        .transition(.move(edge: .leading))
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.2), {
+                                alertBoxVisible = false
+                            })
+                        }
+                    Spacer()
+                }
             }
-            
-            Spacer()
-        }
-        .padding(TodoListApp.edges)
-        .navigationTitle("Editing Task")
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
-                isFocused = true
+            .padding(TodoListApp.edges)
+            .navigationTitle("Editing Task")
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
+                    isFocused = true
+                }
             }
         }
     }
@@ -139,7 +151,7 @@ struct EditView: View {
         } else {
             textFieldText = originalText
             Haptics.withSimpleFeedback()
-            restoreBtnSymbol = "arrow.up"
+            restoreBtnSymbol = "arrow.down"
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
@@ -211,17 +223,29 @@ struct EditView: View {
 
 extension EditView {
     private var formLayer: some View {
+        HStack {
+            TextField(originalText, text: $textFieldText)
+                .padding(.horizontal)
+                .frame(height: 45)
+                .background(Color("TextFieldColor").gradient)
+                .cornerRadius(10)
+                .focused($isFocused)
+        }
+    }
+    
+    private var restoreButtonLayer: some View {
         VStack {
             HStack {
-                TextField(originalText, text: $textFieldText)
-                    .padding(.horizontal)
-                    .frame(height: 45)
-                    .background(Color("TextFieldColor").gradient)
-                    .cornerRadius(10)
-                    .focused($isFocused)
+                Button(action: onRestoreButtonPress) {
+                    Text("Restore original text")
+                        .fontWeight(.bold)
+                    Image(systemName: restoreBtnSymbol)
+                }
+                .buttonStyle(.bordered)
+                .tint(restoreBtnBgColor)
+                .frame(height: 20)
+                Spacer()
             }
-            
-            controlButtonRow
         }
     }
     
@@ -251,19 +275,6 @@ extension EditView {
                         .cornerRadius(10)
                 }
             }
-            HStack {
-                Button(action: onRestoreButtonPress) {
-                    Text("Restore original text")
-                    Image(systemName: restoreBtnSymbol)
-                }
-                .fontWeight(.bold)
-                .padding(.leading)
-                .padding(.top, 5)
-                .padding(.bottom, 3)
-                .foregroundColor(restoreBtnBgColor)
-                .frame(height: 20)
-            }
-            .padding(.top)
         }
     }
     
@@ -277,13 +288,6 @@ extension EditView {
         .background(alertBoxBgColor)
         .cornerRadius(10)
         .foregroundColor(alertBoxFgColor)
-        .padding(.top, 10)
-        .transition(.move(edge: .bottom))
-        .onTapGesture {
-            withAnimation(.easeInOut(duration: 0.2), {
-                alertBoxVisible = false
-            })
-        }
     }
 }
 

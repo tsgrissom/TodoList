@@ -2,15 +2,21 @@ import SwiftUI
 
 struct ListView: View {
    
-    let noItemsBlob = "If you're looking to organize your life, Taskmaster can help with that. Press the big purple button above to begin composing your first task."
-    var viewTitle: String {
+    let noItemsBlob = "Looking to organize your life? Taskmaster can help with that. Press the big purple button above to begin composing your first task."
+    var viewTitle: String { // Computed variable creates a nice title for the todo list based on # of items in list
+        /*
+         Creates a nice title for the todo list based on how many items are in the list
+         =0 tasks - "No Tasks"
+         =1 task - "1 Task"
+         >1 task - "x Tasks"
+         */
         let count = listViewModel.items.count
         var titleNoun: String = "Task"
         if count != 1 { // Plurality fix for 0 tasks ("No Tasks") & > 1 task
             titleNoun += "s"
         }
         return count == 0 ? "No Tasks" : "\(count) \(titleNoun)"
-    } // Computed variable to determine title for window
+    }
     
     @EnvironmentObject var listViewModel: ListViewModel
     
@@ -22,9 +28,6 @@ struct ListView: View {
                 foregroundLayer
                     .navigationTitle(viewTitle)
                     .navigationBarTitleDisplayMode(.inline)
-                    .navigationBarItems(
-                        leading: NavigationLink(destination: SettingsView(), label: { Image(systemName: "gear")}),
-                        trailing: isEmpty() ? nil : EditButton().foregroundColor(.accentColor))
             }
         }
     }
@@ -42,17 +45,7 @@ struct ListView: View {
      Checks if any of the tasks are checked off
      */
     private func hasAnyCompleted() -> Bool {
-        if (isEmpty()) {
-            return false
-        }
-        
-        for item in listViewModel.items {
-            if (item.isCompleted) {
-                return true;
-            }
-        }
-        
-        return false
+        return listViewModel.items.contains { $0.isCompleted }
     }
     
     /*
@@ -121,6 +114,9 @@ extension ListView {
                 }
             }
         }
+        .navigationBarItems(
+            leading: NavigationLink(destination: SettingsView(), label: { Image(systemName: "gear")}),
+            trailing: isEmpty() ? nil : EditButton().foregroundColor(.accentColor))
     }
     
     private func onSwipeLeadingEdge(item: ItemModel) -> some View {
@@ -205,12 +201,12 @@ extension ListView {
                 .fill(Color.accentColor)
                 .frame(height: 55)
                 .frame(maxWidth: 200)
-                .shadow(radius: 20, y: 15)
+                .shadow(radius: 25, y: 15)
             Text("Begin Composing")
                 .foregroundColor(.white)
                 .font(.headline)
+                .transition(.move(edge: .leading))
         }
-        .transition(.move(edge: .leading))
     }
     
     private var quickAddButton: some View {
@@ -226,7 +222,6 @@ extension ListView {
                             .foregroundColor(.white)
                 })
         })
-        .offset(x: -15)
         .simultaneousGesture(
             TapGesture()
                 .onEnded { _ in

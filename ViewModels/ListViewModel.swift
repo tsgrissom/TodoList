@@ -10,12 +10,12 @@ import Foundation
 
 class ListViewModel: ObservableObject {
     
+    let itemsKey: String = "items_list"
     @Published var items: [ItemModel] = [] {
         didSet {
             saveItems()
         }
     }
-    let itemsKey: String = "items_list"
     
     init() {
         getItems()

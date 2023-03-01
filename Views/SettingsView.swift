@@ -3,21 +3,26 @@ import SwiftUI
 struct SettingsView: View {
     
     @EnvironmentObject var listViewModel: ListViewModel
+    @EnvironmentObject var settings: SettingsStore
     
     // MARK: Stateful Vars
     
     @State var showAlert: Bool = false
-    @State var isDebugEnabled: Bool = UserDefaults.standard.bool(forKey: "DebugEnabled")
-    @State var shouldAlphabetize: Bool = UserDefaults.standard.bool(forKey: "AlphabetizeList")
-    @State var shouldUseHaptics: Bool = UserDefaults.standard.bool(forKey: "UseHaptics")
-    @State var shouldOpenSettingsOnSlideFromLeftEdge: Bool = UserDefaults.standard.bool(forKey: "OpenSettingsOnSlideFromLeftEdge")
-    @State var shouldAutoDeleteTaskOnCheckoff: Bool = UserDefaults.standard.bool(forKey: "AutoDeleteTaskOnCheckoff")
-    @State var appTheme: String = UserDefaults.standard.string(forKey: "Theme") ?? "Default"
     
     // MARK: Body Start
     
     var body: some View {
-        contentLayer
+        VStack {
+            List {
+                listPreferencesSection
+                listBehaviorSection
+                listMiscSection
+            }
+            .tint(.accentColor)
+            Spacer()
+        }
+        .ignoresSafeArea(edges: .bottom)
+        .navigationTitle("Settings")
     }
     
     // MARK: Functions
@@ -32,39 +37,33 @@ struct SettingsView: View {
             secondaryButton: .cancel()
         )
     }
+    
+    func getEmptyListAlert() -> Alert {
+        Alert(title: Text("There's no tasks to dismiss!"))
+    }
 }
 
 // MARK: Layers + Components
 
 extension SettingsView {
-    var contentLayer: some View {
-        VStack {
-            List {
-                listPreferencesSection
-                listBehaviorSection
-                listMiscSection
-            }
-            .tint(.accentColor)
-            Spacer()
-        }
-        .ignoresSafeArea(edges: .bottom)
-        .navigationTitle("Settings")
-    }
-    
     var listPreferencesSection: some View {
         Section("Application preferences") {
-            Picker("App theme", selection: $appTheme, content: {
-                Text("Default (purple)").tag("default")
-                Text("Dark").tag("dark")
-                Text("Light").tag("light")
+            Picker("Background", selection: $settings.themeBg, content: {
+                Text("System").tag(ThemeBackground.system)
+                Text("Dark").tag(ThemeBackground.dark)
+                Text("Light").tag(ThemeBackground.light)
             })
-            Toggle(isOn: $shouldUseHaptics, label: {
+            Picker("Accent", selection: $settings.themeAccent) {
+                Text("Default (Purple)").tag(ThemeAccent.purple)
+                Text("iOS (Blue)").tag(ThemeAccent.blue)
+            }
+            Toggle(isOn: $settings.shouldUseHaptics, label: {
                 Text("Use haptic feedback (iPhone)")
             })
-            Toggle(isOn: $shouldOpenSettingsOnSlideFromLeftEdge, label: {
+            Toggle(isOn: $settings.shouldOpenSettingsOnLeftEdgeSlide, label: {
                 Text("Swipe from left edge opens settings")
             })
-            Toggle(isOn: $isDebugEnabled, label: {
+            Toggle(isOn: $settings.isDebugEnabled, label: {
                 Text("Debug enabled")
             })
         }
@@ -72,10 +71,10 @@ extension SettingsView {
     
     var listBehaviorSection: some View {
         Section("Customize list behavior") {
-            Toggle(isOn: $shouldAlphabetize, label: {
+            Toggle(isOn: $settings.shouldAlphabetizeList, label: {
                 Text("Alphabetize task items")
             })
-            Toggle(isOn: $shouldAutoDeleteTaskOnCheckoff, label: {
+            Toggle(isOn: $settings.shouldAutoDeleteTaskOnCheckoff, label: {
                 Text("Auto-delete task on check-off")
             })
         }
@@ -90,11 +89,11 @@ extension SettingsView {
                     Text("Clear tasks")
                 }
                 .buttonStyle(.bordered)
-                .background(Color("Danger").gradient)
+                .background(Color("Danger"))
                 .cornerRadius(5)
                 .foregroundColor(.white)
                 .padding(2)
-                .alert(isPresented: $showAlert, content: getClearConfirmAlert)
+                .alert(isPresented: $showAlert, content: listViewModel.items.isEmpty ? getEmptyListAlert : getClearConfirmAlert)
             }
         }
     }
