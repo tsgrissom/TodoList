@@ -218,7 +218,7 @@ extension AddView {
                 .focused($isFocused)
                 .padding(.horizontal)
                 .frame(height: 45)
-                .background(Color("TextFieldColor").gradient)
+                .background(Color.theme.textFieldColor.gradient)
                 .cornerRadius(10)
         }
     }

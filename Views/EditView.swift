@@ -234,7 +234,7 @@ extension EditView {
             TextField(originalText, text: $textFieldText)
                 .padding(.horizontal)
                 .frame(height: 45)
-                .background(Color("TextFieldColor").gradient)
+                .background(Color.theme.textFieldColor.gradient)
                 .cornerRadius(10)
                 .focused($isFocused)
         }

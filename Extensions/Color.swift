@@ -2,6 +2,8 @@ import Foundation
 import SwiftUI
 
 extension Color {
+    static let theme = ColorTheme()
+    
     init?(named name: String) {
         guard let color = UIColor(named: name) else {
             return nil
@@ -11,13 +13,8 @@ extension Color {
     }
 }
 
-public enum ThemeBackground: String, CaseIterable {
-    case dark
-    case system
-    case light
-}
-
-public enum ThemeAccent: String, CaseIterable {
-    case purple
-    case blue
+struct ColorTheme {
+    let accent = Color("AccentColor")
+    let danger = Color("DangerColor")
+    let textFieldColor = Color("TextFieldColor")
 }

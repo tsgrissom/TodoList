@@ -89,7 +89,7 @@ extension SettingsView {
                     Text("Clear tasks")
                 }
                 .buttonStyle(.bordered)
-                .background(Color("Danger"))
+                .background(Color.theme.danger)
                 .cornerRadius(5)
                 .foregroundColor(.white)
                 .padding(2)
