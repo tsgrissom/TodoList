@@ -61,7 +61,7 @@ extension SettingsView {
                 Text("Use haptic feedback (iPhone)")
             })
             Toggle(isOn: $settings.shouldOpenSettingsOnLeftEdgeSlide, label: {
-                Text("Swipe from left edge opens settings")
+                Text("Swipe from left edge to open settings")
             })
             Toggle(isOn: $settings.isDebugEnabled, label: {
                 Text("Debug enabled")

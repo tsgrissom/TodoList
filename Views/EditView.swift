@@ -4,6 +4,7 @@ struct EditView: View {
     
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var listViewModel: ListViewModel
+    @EnvironmentObject var settings: SettingsStore
     
     // MARK: Constants
     
@@ -11,7 +12,6 @@ struct EditView: View {
     
     // MARK: Stateful Vars
 
-    @State var showAlert: Bool = false
     @State var alertBoxTitle: String = ""
     @State var alertBoxBgColor: Color = .red
     @State var alertBoxFgColor: Color = .white
@@ -22,6 +22,7 @@ struct EditView: View {
     @State var clearBtnWidth: Double = .infinity
     @State var saveBtnBgColor: Color = .accentColor
     @State var saveBtnSymbol: String = "checkmark"
+    @State var systemAlertVisible: Bool = false
     @State var restoreBtnBgColor: Color = .yellow
     @State var restoreBtnSymbol: String = "square.on.square"
     
@@ -72,6 +73,10 @@ struct EditView: View {
         }
     }
     
+    private func shouldUseHaptics() -> Bool {
+        $settings.shouldUseHaptics.wrappedValue
+    }
+    
     // MARK: Event Functions
     
     func onSaveButtonPress() {
@@ -81,7 +86,7 @@ struct EditView: View {
             saveBtnBgColor = .red
             saveBtnSymbol = "xmark"
             
-            Haptics.withSimpleFeedback(type: .warning)
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), type: .warning)
             flashAlert(
                 text: alertBoxVisible
                 ? "Task is too short. Please enter at least \(minLength) characters." // Provide second text if they click-spam for UX
@@ -104,7 +109,7 @@ struct EditView: View {
         
         clearBtnWidth = 0
         
-        Haptics.withSimpleFeedback()
+        Haptics.withSimpleFeedback(playOut: shouldUseHaptics())
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
             listViewModel.updateItem(item: ItemModel(id: item.id, title: textFieldText, isCompleted: item.isCompleted))
@@ -120,7 +125,7 @@ struct EditView: View {
                 clearBtnSymbol = "trash.fill"
             }
             
-            Haptics.withSimpleFeedback(type: .warning)
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), type: .warning)
             
             return
         }
@@ -134,7 +139,7 @@ struct EditView: View {
             clearBtnAnimated = true
         }
         
-        Haptics.withSimpleFeedback()
+        Haptics.withSimpleFeedback(playOut: shouldUseHaptics())
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             withAnimation(.easeIn) {
@@ -146,11 +151,11 @@ struct EditView: View {
     
     func onRestoreButtonPress() {
         if !textFieldText.isEmpty {
-            Haptics.withSimpleFeedback(type: .warning)
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), type: .warning)
             restoreBtnSymbol = "xmark"
         } else {
             textFieldText = originalText
-            Haptics.withSimpleFeedback()
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics())
             restoreBtnSymbol = "arrow.down"
         }
         
@@ -167,7 +172,7 @@ struct EditView: View {
             message: Text("This action cannot be undone"),
             primaryButton: .destructive(Text("Confirm"), action: {
                 textFieldText = originalText
-                Haptics.withSimpleFeedback()
+                Haptics.withSimpleFeedback(playOut: shouldUseHaptics())
             }),
             secondaryButton: .cancel()
         )

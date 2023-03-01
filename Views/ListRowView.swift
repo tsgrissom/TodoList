@@ -7,6 +7,7 @@ struct ListRowView: View {
     
     @Environment(\.colorScheme) var systemColorScheme
     @EnvironmentObject var listViewModel: ListViewModel
+    @EnvironmentObject var settings: SettingsStore
     
     let item: ItemModel
     
@@ -18,7 +19,7 @@ struct ListRowView: View {
                 .foregroundColor(item.isCompleted ? .accentColor : checkboxFgColor)
                 .onTapGesture {
                     listViewModel.updateItem(item: item)
-                    Haptics.withSimpleFeedback()
+                    Haptics.withSimpleFeedback(playOut: $settings.shouldUseHaptics.wrappedValue)
                 }
             NavigationLink(destination: EditView(item: item)) {
                 Text(item.title)

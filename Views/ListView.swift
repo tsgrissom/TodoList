@@ -19,6 +19,7 @@ struct ListView: View {
     }
     
     @EnvironmentObject var listViewModel: ListViewModel
+    @EnvironmentObject var settings: SettingsStore
     
     @State var animateButtonSlide: Bool = false
     
@@ -119,6 +120,10 @@ extension ListView {
             trailing: isEmpty() ? nil : EditButton().foregroundColor(.accentColor))
     }
     
+    private func shouldUseHaptics() -> Bool {
+        $settings.shouldUseHaptics.wrappedValue
+    }
+    
     private func onSwipeLeadingEdge(item: ItemModel) -> some View {
         Button(item.isCompleted ? "Undo Complete" : "Complete", action: {
             listViewModel.updateItem(item: item)
@@ -129,7 +134,7 @@ extension ListView {
     private func cmCopyButton(item: ItemModel) -> some View {
         Button(action: {
             UIPasteboard.general.string = item.title
-            Haptics.withImpact(style: .light)
+            Haptics.withImpact(playOut: shouldUseHaptics(), style: .light)
         }, label: {
             Label("Copy", systemImage: "clipboard")
         })
@@ -140,7 +145,7 @@ extension ListView {
             withAnimation(.linear) {
                 duplicateTask(item: item)
             }
-            Haptics.withSimpleFeedback()
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics())
         }) {
             Label("Duplicate", systemImage: "doc.on.doc")
         }
@@ -159,7 +164,7 @@ extension ListView {
             withAnimation(.linear) {
                 deleteTask(item: item)
             }
-            Haptics.withSimpleFeedback()
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics())
         }) {
             Label("Delete task", systemImage: "trash.fill")
         }
@@ -181,7 +186,7 @@ extension ListView {
             .simultaneousGesture(
                 TapGesture()
                     .onEnded { _ in
-                        Haptics.withSimpleFeedback()
+                        Haptics.withSimpleFeedback(playOut: shouldUseHaptics())
                     }
             )
         }
@@ -225,7 +230,7 @@ extension ListView {
         .simultaneousGesture(
             TapGesture()
                 .onEnded { _ in
-                    Haptics.withImpact(style: .light)
+                    Haptics.withImpact(playOut: shouldUseHaptics(), style: .light)
                 }
         )
     }
@@ -239,5 +244,6 @@ struct ListView_Previews: PreviewProvider {
             ListView()
         }
         .environmentObject(ListViewModel())
+        .environmentObject(SettingsStore())
     }
 }

@@ -4,6 +4,7 @@ struct AddView: View {
     
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var listViewModel: ListViewModel
+    @EnvironmentObject var settings: SettingsStore
     
     // MARK: Stateful Vars
     
@@ -49,6 +50,10 @@ struct AddView: View {
         }
     }
     
+    private func shouldUseHaptics() -> Bool {
+        $settings.shouldUseHaptics.wrappedValue
+    }
+    
     // MARK: Event Functions
     
     func onSaveButtonPress() {
@@ -62,7 +67,7 @@ struct AddView: View {
                 ? "Task is too short. Please enter at least \(TodoListApp.minTaskLength) characters." // Provide second text if they click-spam for UX
                 : "Tasks must be at least \(TodoListApp.minTaskLength) characters in length 📏"
             )
-            Haptics.withSimpleFeedback(type: .warning)
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), type: .warning)
             
             if !isFocused {
                 isFocused = true
@@ -93,7 +98,7 @@ struct AddView: View {
             clearBtnWidth = 0
         }
         
-        Haptics.withSimpleFeedback()
+        Haptics.withSimpleFeedback(playOut: shouldUseHaptics())
         
         listViewModel.addItem(title: textFieldText)
         
@@ -108,7 +113,7 @@ struct AddView: View {
         let success: Bool = !textFieldText.isEmpty
         
         if success {
-            Haptics.withSimpleFeedback()
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics())
             flashAlert(
                 text: "Text field cleared",
                 bgColor: .accentColor,
@@ -118,7 +123,7 @@ struct AddView: View {
                 clearBtnSuccessAnimated = true
             }
         } else {
-            Haptics.withSimpleFeedback(type: .warning)
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), type: .warning)
             withAnimation(.easeInOut) {
                 clearBtnFailAnimated = true
             }
