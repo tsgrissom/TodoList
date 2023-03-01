@@ -136,7 +136,7 @@ extension ListView {
     private func cmCopyButton(item: ItemModel) -> some View {
         Button(action: {
             UIPasteboard.general.string = item.title
-            Haptics.withImpact(playOut: shouldUseHaptics(), style: .light)
+            Haptics.withImpact(playOut: shouldUseHaptics(), .light)
         }) {
             Label("Copy", systemImage: "clipboard")
         }
@@ -228,7 +228,7 @@ extension ListView {
         .simultaneousGesture(
             TapGesture()
                 .onEnded { _ in
-                    Haptics.withImpact(playOut: shouldUseHaptics(), style: .light)
+                    Haptics.withImpact(playOut: shouldUseHaptics(), .light)
                 }
         )
     }

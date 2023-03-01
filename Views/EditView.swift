@@ -45,10 +45,10 @@ struct EditView: View {
         
         return ScrollView {
             VStack {
-                restoreButtonLayer
+                restoreButtonRow
                     .padding(.bottom, 8)
                 
-                formLayer
+                formRow
                 controlButtonRow
                 
                 Spacer()
@@ -88,7 +88,7 @@ struct EditView: View {
             saveBtnBgColor = .red
             saveBtnSymbol = "xmark"
             
-            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), type: .warning)
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), .warning)
             flashAlert(
                 text: alertBoxVisible
                 ? "Task is too short. Please enter at least \(minLength) characters." // Provide second text if they click-spam for UX
@@ -127,7 +127,7 @@ struct EditView: View {
                 clearBtnSymbol = "trash.fill"
             }
             
-            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), type: .warning)
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), .warning)
             
             return
         }
@@ -153,7 +153,7 @@ struct EditView: View {
     
     func onRestoreButtonPress() {
         if !textFieldText.isEmpty {
-            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), type: .warning)
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), .warning)
             restoreBtnSymbol = "xmark"
         } else {
             textFieldText = originalText
@@ -229,7 +229,7 @@ struct EditView: View {
 // MARK: Layers + Components
 
 extension EditView {
-    private var formLayer: some View {
+    private var formRow: some View {
         HStack {
             TextField(originalText, text: $textFieldText)
                 .padding(.horizontal)
@@ -240,7 +240,7 @@ extension EditView {
         }
     }
     
-    private var restoreButtonLayer: some View {
+    private var restoreButtonRow: some View {
         VStack {
             HStack {
                 Button(action: onRestoreButtonPress) {

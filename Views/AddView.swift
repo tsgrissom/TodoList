@@ -72,7 +72,7 @@ struct AddView: View {
                 ? "Task is too short. Please enter at least \(TodoListApp.minTaskLength) characters." // Provide second text if they click-spam for UX
                 : "Tasks must be at least \(TodoListApp.minTaskLength) characters in length 📏"
             )
-            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), type: .warning)
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), .warning)
             
             if !isFocused {
                 isFocused = true
@@ -128,7 +128,7 @@ struct AddView: View {
                 clearBtnSuccessAnimated = true
             }
         } else {
-            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), type: .warning)
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics(), .warning)
             withAnimation(.easeInOut) {
                 clearBtnFailAnimated = true
             }
