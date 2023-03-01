@@ -12,7 +12,7 @@ struct ListView: View {
          */
         let count = listViewModel.items.count
         var titleNoun: String = "Task"
-        if count != 1 { // Plurality fix for 0 tasks ("No Tasks") & > 1 task
+        if count > 1 { // Plurality fix for 0 tasks ("No Tasks") & > 1 task
             titleNoun += "s"
         }
         return count == 0 ? "No Tasks" : "\(count) \(titleNoun)"
@@ -24,11 +24,20 @@ struct ListView: View {
     @State var animateButtonSlide: Bool = false
     
     var body: some View {
-        VStack {
+        let height = UIScreen.main.bounds.height
+        
+        return VStack {
             ZStack {
                 foregroundLayer
                     .navigationTitle(viewTitle)
                     .navigationBarTitleDisplayMode(.inline)
+                
+                HStack {
+                    Spacer()
+                    quickAddButton
+                        .padding(.trailing, 20)
+                        .padding(.top, height - 175)
+                }
             }
         }
     }
@@ -76,17 +85,19 @@ struct ListView: View {
 
 extension ListView {
     private var foregroundLayer: some View {
-        VStack {
+        let isPhone = UIDevice.current.userInterfaceIdiom == .phone
+        
+        return VStack {
             if listViewModel.items.count < 1 {
                 Spacer()
-                onboardingButton
+                onboardingSection
             }
             
             if isEmpty() {
                 Text(noItemsBlob)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 15)
-                    .offset(y: animateButtonSlide ? -125 : 0)
+                    .padding(.horizontal, isPhone ? 30 : 300)
+                    .offset(y: animateButtonSlide ? -400 : -300)
             } else {
                 List {
                     ForEach(listViewModel.items) { item in
@@ -105,15 +116,6 @@ extension ListView {
                     .onMove(perform: listViewModel.moveItem)
                 }
             }
-            
-            Spacer()
-            HStack {
-                Spacer()
-                if listViewModel.items.count > 1 {
-                    Spacer()
-                    quickAddButton
-                }
-            }
         }
         .navigationBarItems(
             leading: NavigationLink(destination: SettingsView(), label: { Image(systemName: "gear")}),
@@ -125,9 +127,9 @@ extension ListView {
     }
     
     private func onSwipeLeadingEdge(item: ItemModel) -> some View {
-        Button(item.isCompleted ? "Undo Complete" : "Complete", action: {
+        Button(item.isCompleted ? "Undo Complete" : "Complete") {
             listViewModel.updateItem(item: item)
-        })
+        }
         .tint(item.isCompleted ? .red : .green)
     }
     
@@ -135,9 +137,9 @@ extension ListView {
         Button(action: {
             UIPasteboard.general.string = item.title
             Haptics.withImpact(playOut: shouldUseHaptics(), style: .light)
-        }, label: {
+        }) {
             Label("Copy", systemImage: "clipboard")
-        })
+        }
     }
     
     private func cmDuplicateButton(item: ItemModel) -> some View {
@@ -153,10 +155,11 @@ extension ListView {
     
     private func cmShareButton(item: ItemModel) -> some View {
         Button(action: {
-            // Offer a share sheet for the provided ItemModel
-        }, label: {
+            // TODO Offer a share sheet for the provided ItemModel
+            Haptics.withSimpleFeedback(playOut: shouldUseHaptics())
+        }) {
             Label("Share", systemImage: "square.and.arrow.up")
-        })
+        }
     }
     
     private func cmDeleteButton(item: ItemModel) -> some View {
@@ -170,7 +173,7 @@ extension ListView {
         }
     }
     
-    private var onboardingButton: some View {
+    private var onboardingSection: some View {
         VStack {
             Text("Ready to get started? ⬇️")
                 .font(.caption)
@@ -190,7 +193,7 @@ extension ListView {
                     }
             )
         }
-        .offset(y: animateButtonSlide ? -100 : 0)
+        .offset(y: animateButtonSlide ? -400 : -300)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 withAnimation(.easeInOut(duration: 0.75)) {
@@ -218,14 +221,9 @@ extension ListView {
         NavigationLink(
             destination: AddView(),
             label: {
-                Circle()
-                    .fill(Color.accentColor)
-                    .frame(width: 50, height: 50)
-                    .overlay(content: {
-                        Image(systemName: "plus")
-                            .imageScale(.large)
-                            .foregroundColor(.white)
-                })
+                Image(systemName: "plus")
+                    .imageScale(.large)
+                    .foregroundColor(Color.accentColor)
         })
         .simultaneousGesture(
             TapGesture()
